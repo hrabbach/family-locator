@@ -397,8 +397,13 @@ input:checked+.slider:before {
     font-size: 0.7rem;
     color: var(--text-secondary);
     opacity: 0.6;
-    pointer-events: none;
+    text-decoration: none;
+    transition: opacity 0.2s;
     z-index: 9999;
+}
+
+.version-tag:hover {
+    opacity: 1;
 }
 
 /* Responsive Adjustments */

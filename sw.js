@@ -1,11 +1,11 @@
-const CACHE_NAME = 'family-tracker-v1.1.6';
+const CACHE_NAME = 'family-tracker-v1.1.7';
 const ASSETS = [
     '/familytrack/',
     '/familytrack/index.html',
-    '/familytrack/style.css?v=1.1.6',
-    '/familytrack/app.js?v=1.1.6',
-    '/familytrack/manifest.json?v=1.1.6',
-    '/familytrack/icon.png?v=1.1.6'
+    '/familytrack/style.css?v=1.1.7',
+    '/familytrack/app.js?v=1.1.7',
+    '/familytrack/manifest.json?v=1.1.7',
+    '/familytrack/icon.png?v=1.1.7'
 ];
 
 self.addEventListener('install', event => {
