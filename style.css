@@ -1,0 +1,485 @@
+:root {
+    --bg-color: #0d1117;
+    --card-bg: rgba(33, 38, 45, 0.7);
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --accent-color: #58a6ff;
+    --success-color: #238636;
+    --warning-color: #d29922;
+    --danger-color: #da3633;
+    --border-color: #30363d;
+    --glass-blur: blur(10px);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+#app {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+h1 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, var(--accent-color), #bc8cf2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.config-view,
+.dashboard-view {
+    display: none;
+}
+
+.config-view.active,
+.dashboard-view.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: #161b22;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: var(--accent-color);
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.member-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.member-card:last-child {
+    border-bottom: none;
+}
+
+.member-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-email {
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.member-display-name {
+    font-size: 1.1rem;
+    color: var(--accent-color);
+}
+
+.member-email-addr {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.edit-name-btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-name-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.member-location {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.member-distance {
+    color: var(--accent-color);
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-backdrop.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 400px;
+    padding: 2rem;
+    animation: slideUp 0.3s ease-out;
+}
+
+/* Map View Styles */
+.map-view {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 500;
+    background: var(--bg-color);
+}
+
+.map-view.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.map-header {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 95%;
+    max-width: 700px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+}
+
+.map-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+#mapContainer {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Custom Leaflet Dark Mode */
+.leaflet-tile {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+.leaflet-container {
+    background: var(--bg-color);
+}
+
+h3 {
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.member-meta {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.battery {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.battery-low {
+    color: var(--danger-color);
+}
+
+.battery-mid {
+    color: var(--warning-color);
+}
+
+.battery-high {
+    color: var(--success-color);
+}
+
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.refreshing {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Toggle Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-secondary);
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+input:checked+.slider:before {
+    transform: translateX(14px);
+    background-color: white;
+}
+
+.slider.round {
+    border-radius: 20px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.version-tag {
+    position: fixed;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+
+    /* Move map info to bottom on mobile */
+    .map-header {
+        top: auto;
+        bottom: 2rem;
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+
+    .map-user-info {
+        align-items: center;
+    }
+
+    #closeMapBtn {
+        width: 100%;
+    }
+
+    body {
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    .glass-panel {
+        padding: 1rem;
+    }
+
+    .member-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .member-meta {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px dashed var(--border-color);
+        padding-top: 0.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .member-email {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .member-display-name {
+        font-size: 1rem;
+    }
+
+    .member-email-addr {
+        display: block;
+        width: 100%;
+        margin-top: -0.1rem;
+    }
+
+    .edit-name-btn {
+        margin-top: 0.25rem;
+    }
+
+    .status-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    #logoutBtn {
+        width: 100%;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
