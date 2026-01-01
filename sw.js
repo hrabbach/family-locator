@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 const CACHE_NAME = 'family-tracker-v1.1.7';
 const ASSETS = [
     '/familytrack/',

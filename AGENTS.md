@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License. -->
 # Family Location Tracker Specifications
 
 ## Overview

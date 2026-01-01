@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License. -->
 # Family Locator
 
 A lightweight, self-hosted Progressive Web App (PWA) designed to track family members' locations using the Dawarich API. This tool provides a real-time dashboard and interactive map view for staying connected with your loved ones.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 const CONFIG_KEY = 'family_tracker_config';
 const NAMES_KEY = 'family_tracker_names';
 let refreshInterval;
