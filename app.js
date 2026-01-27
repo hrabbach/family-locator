@@ -319,7 +319,7 @@ function updateUI(data) {
                          <span class="member-email-addr">(Owner)</span>
                     </div>
                     <div class="member-location">
-                        Lat: ${(ownerLocation.latitude || ownerLocation.lat).toFixed(5)}, Lon: ${(ownerLocation.longitude || ownerLocation.lon).toFixed(5)}
+                        Lat: ${parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5)}, Lon: ${parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5)}
                     </div>
                 </div>
                 <div class="member-meta">

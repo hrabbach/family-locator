@@ -42,6 +42,6 @@ The tool uses the following endpoint:
 - **Enhanced Map Visualization**: Permanent labels on markers for instant identification, and smart padding to prevent markers from being hidden behind UI overlays.
 - **Unified Dashboard**: API Owner appears at the top of the member list with a distinct style for easy monitoring.
 
-### Current Version: v1.2.1
+### Current Version: v1.2.2
 
 
