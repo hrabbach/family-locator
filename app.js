@@ -6,28 +6,31 @@ let countdownInterval;
 let secondsToRefresh = 10;
 
 const elements = {
+    // Views
     configView: document.getElementById('configView'),
     dashboardView: document.getElementById('dashboardView'),
-    baseUrlInput: document.getElementById('baseUrl'),
+    mapView: document.getElementById('mapView'),
+    qrReaderContainer: document.getElementById('qrReaderContainer'),
+
+    // Config Inputs
     baseUrlInput: document.getElementById('baseUrl'),
     apiKeyInput: document.getElementById('apiKey'),
     apiUserNameInput: document.getElementById('apiUserName'),
+
+    // Buttons
     saveBtn: document.getElementById('saveConfig'),
     logoutBtn: document.getElementById('logoutBtn'),
+    scanQrBtn: document.getElementById('scanQrBtn'),
+    stopScanBtn: document.getElementById('stopScanBtn'),
+    viewSelectedBtn: document.getElementById('viewSelectedBtn'),
+
+    // Dashboard
     membersList: document.getElementById('membersList'),
     lastUpdated: document.getElementById('lastUpdated'),
     refreshStatus: document.getElementById('refreshStatus'),
-    scanQrBtn: document.getElementById('scanQrBtn'),
-    qrReaderContainer: document.getElementById('qrReaderContainer'),
-    stopScanBtn: document.getElementById('stopScanBtn'),
-    modal: document.getElementById('modalBackdrop'),
-    modalEmail: document.getElementById('modalEmail'),
-    modalInput: document.getElementById('newNameInput'),
-    modalSaveBtn: document.getElementById('saveModal'),
-    modalCancelBtn: document.getElementById('cancelModal'),
-    mapView: document.getElementById('mapView'),
+
+    // Map specific
     mapContainer: document.getElementById('mapContainer'),
-    closeMapBtn: document.getElementById('closeMapBtn'),
     mapUserName: document.getElementById('mapUserName'),
     mapUserEmail: document.getElementById('mapUserEmail'),
     mapBattery: document.getElementById('mapBattery'),
@@ -35,8 +38,6 @@ const elements = {
     mapLastRefresh: document.getElementById('mapLastRefresh'),
     toggleProximity: document.getElementById('toggleProximity'),
     distanceBadge: document.getElementById('distanceBadge'),
-    recenterMapBtn: document.getElementById('recenterMapBtn'),
-    viewSelectedBtn: document.getElementById('viewSelectedBtn')
 };
 
 let currentEditingEmail = null;
@@ -291,9 +292,7 @@ function updateUI(data) {
     const hasSelection = selectedMemberEmails.size > 0;
     elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
-    elements.viewSelectedBtn.onclick = () => {
-        showMap();
-    };
+    elements.viewSelectedBtn.onclick = () => showMap();
 
     elements.membersList.innerHTML = '';
 
@@ -305,21 +304,23 @@ function updateUI(data) {
         const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown';
         const batt = ownerLocation.battery || ownerLocation.batt || '?';
         const batteryClass = getBatteryClass(batt);
+        const lat = parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5);
+        const lon = parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5);
 
         const ownerCard = `
             <div class="member-card owner-card">
-                 <div class="member-checkbox-container" style="visibility: hidden;">
+                 <div class="member-checkbox-container">
                     <!-- Placeholder to align with list -->
-                    <div style="width: 20px; height: 20px; margin-right: 1rem;"></div>
                 </div>
                 <div class="avatar" style="background: #ffd700; color: #333;">O</div>
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" style="color: #ffd700;">${ownerName}</span>
                          <span class="member-email-addr">(Owner)</span>
+                         <button class="edit-name-btn" onclick="editName('OWNER')">Edit</button>
                     </div>
                     <div class="member-location">
-                        Lat: ${parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5)}, Lon: ${parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5)}
+                        Lat: ${lat}, Lon: ${lon}
                     </div>
                 </div>
                 <div class="member-meta">
@@ -409,9 +410,17 @@ function getBatteryClass(level) {
 
 function editName(email) {
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+
     currentEditingEmail = email;
-    elements.modalEmail.innerText = `For ${email}`;
-    elements.modalInput.value = names[email] || "";
+    if (email === 'OWNER') {
+        elements.modalEmail.innerText = `Update your display name`;
+        elements.modalInput.value = config.apiUserName || "";
+    } else {
+        elements.modalEmail.innerText = `For ${email}`;
+        elements.modalInput.value = names[email] || "";
+    }
+
     elements.modal.classList.add('active');
     setTimeout(() => elements.modalInput.focus(), 100);
 }
@@ -437,13 +446,26 @@ function updateMapMarkers() {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        map.on('dragstart', () => { isAutoCenterEnabled = false; elements.recenterMapBtn.style.display = 'block'; });
-        map.on('zoomstart', (e) => { if (e.originalEvent) { isAutoCenterEnabled = false; elements.recenterMapBtn.style.display = 'block'; } });
+        map.on('dragstart', () => {
+            isAutoCenterEnabled = false;
+            const btn = document.getElementById('dynamicRecenterBtn');
+            if (btn) btn.style.display = 'block';
+        });
+        map.on('zoomstart', (e) => {
+            if (e.originalEvent) {
+                isAutoCenterEnabled = false;
+                const btn = document.getElementById('dynamicRecenterBtn');
+                if (btn) btn.style.display = 'block';
+            }
+        });
 
         elements.toggleProximity.addEventListener('change', (e) => {
             proximityEnabled = e.target.checked;
             isAutoCenterEnabled = true;
-            elements.recenterMapBtn.style.display = 'none';
+            // elements.recenterMapBtn.style.display = 'none'; // Removed static button reference
+            // Hide recenter button on toggle because we auto-center
+            const btn = document.getElementById('dynamicRecenterBtn');
+            if (btn) btn.style.display = 'none';
             if (proximityEnabled) startUserTracking(); else stopUserTracking();
             updateMapMarkers();
         });
@@ -553,41 +575,173 @@ function updateMapMarkers() {
         hasMarkers = true; // Count user as a marker for bounds? Maybe.
     }
 
-    // Update Header Info (If only 1 selected, show details, otherwise generic)
-    if (selectedMemberEmails.size === 1) {
-        const email = Array.from(selectedMemberEmails)[0];
+    // Unified Map Overlay
+    const header = document.querySelector('.map-header');
+    header.innerHTML = ''; // Clear previous
+
+    const card = document.createElement('div');
+    card.className = 'map-unified-card';
+
+    // 1. Collect all users to show
+    const usersToShow = [];
+
+    // Owner (if enabled)
+    if (showOwnerLocation && ownerLocation) {
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        usersToShow.push({
+            name: config.apiUserName || "API Owner",
+            email: "Owner",
+            timestamp: ownerLocation.timestamp,
+            battery: ownerLocation.battery,
+            isOwner: true,
+            initial: (config.apiUserName || "O").charAt(0).toUpperCase()
+        });
+    }
+
+    // Selected Members
+    selectedMemberEmails.forEach(email => {
         const member = lastLocations.find(m => m.email === email);
         if (member) {
-            const displayName = names[email] || email;
-            elements.mapUserName.innerText = displayName;
-            elements.mapUserEmail.innerText = email;
-            elements.mapBattery.innerText = `Battery: ${member.battery}%`;
-            elements.mapLastSeen.innerText = formatRelativeTime(member.timestamp);
-            elements.mapLastRefresh.innerText = `Updated: ${new Date().toLocaleTimeString()}`;
+            usersToShow.push({
+                name: names[email] || email,
+                email: email,
+                timestamp: member.timestamp,
+                battery: member.battery,
+                isOwner: false,
+                initial: member.email_initial
+            });
         }
+    });
+
+    // 2. Build Card Content
+    // Header
+    const titleText = usersToShow.length === 1
+        ? usersToShow[0].name
+        : `Tracking ${usersToShow.length} Members`;
+
+    // Toggle chevron
+    const chevron = `<span style="font-size: 0.8rem; transform: rotate(0deg); transition: transform 0.2s;">▼</span>`;
+
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'map-card-header';
+    cardHeader.innerHTML = `<span>${titleText}</span> ${usersToShow.length > 1 ? chevron : ''}`;
+
+    // Body (List of users)
+    const cardBody = document.createElement('div');
+    cardBody.className = 'map-card-body';
+
+    if (usersToShow.length === 0) {
+        cardBody.innerHTML = `<div class="map-member-row" style="justify-content: center; color: var(--text-secondary);">No members selected</div>`;
     } else {
-        elements.mapUserName.innerText = `${selectedMemberEmails.size} Members`;
-        elements.mapUserEmail.innerText = showOwnerLocation ? "(+ Owner)" : "";
-        elements.mapBattery.innerText = "";
-        elements.mapLastSeen.innerText = "";
-        elements.mapLastRefresh.innerText = `Updated: ${new Date().toLocaleTimeString()}`;
+        usersToShow.forEach(u => {
+            const timeStr = formatRelativeTime(u.timestamp);
+            const row = document.createElement('div');
+            row.className = `map-member-row ${u.isOwner ? 'is-owner' : ''}`;
+            row.innerHTML = `
+                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : 'var(--accent-color)'}; color: #333;">${u.initial}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${u.name}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                        ${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${timeStr}
+                    </div>
+                </div>
+            `;
+            cardBody.appendChild(row);
+        });
+    }
+
+    // Footer (Toggle + Controls)
+    const cardFooter = document.createElement('div');
+    cardFooter.className = 'map-card-footer';
+
+    // Show My Location Toggle
+    const toggleContainer = document.createElement('div');
+    if (!showOwnerLocation) {
+        toggleContainer.style.display = 'flex';
+        toggleContainer.style.alignItems = 'center';
+        toggleContainer.style.gap = '0.5rem';
+
+        const switchLabel = document.createElement('label');
+        switchLabel.className = 'switch';
+        switchLabel.style.transform = 'scale(0.8)';
+        switchLabel.appendChild(elements.toggleProximity); // Re-attach existing element
+        const slider = document.createElement('span');
+        slider.className = 'slider round';
+        switchLabel.appendChild(slider);
+
+        toggleContainer.appendChild(switchLabel);
+        toggleContainer.appendChild(elements.distanceBadge);
+
+        // Label text
+        const label = document.createElement('span');
+        label.innerText = "Me";
+        label.style.fontSize = '0.85rem';
+        label.style.fontWeight = '500';
+        toggleContainer.appendChild(label);
+    }
+
+    // Buttons
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.display = 'flex';
+    buttonsContainer.style.gap = '0.5rem';
+
+    // Dynamic Buttons creation
+    // Dynamic Buttons creation
+    const recenterBtn = document.createElement('button');
+    recenterBtn.id = 'dynamicRecenterBtn'; // stable ID for listeners
+    recenterBtn.innerText = 'Recenter';
+    recenterBtn.className = 'edit-name-btn'; // reuse style
+    recenterBtn.style.padding = '0.3rem 0.8rem';
+    recenterBtn.style.fontSize = '0.8rem';
+    recenterBtn.style.background = 'var(--accent-color)';
+    recenterBtn.style.color = 'white';
+    recenterBtn.style.display = isAutoCenterEnabled ? 'none' : 'block'; // Set initial state
+    recenterBtn.onclick = () => {
+        recenterMap();
+        recenterBtn.style.display = 'none';
+    };
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerText = 'Close'; // Renamed to simple "Close"
+    closeBtn.className = 'edit-name-btn';
+    closeBtn.style.padding = '0.3rem 1rem';
+    closeBtn.style.fontSize = '0.8rem';
+    closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
+    closeBtn.style.color = 'var(--text-primary)';
+    closeBtn.onclick = closeMap;
+
+    buttonsContainer.appendChild(recenterBtn);
+    buttonsContainer.appendChild(closeBtn);
+
+    cardFooter.appendChild(toggleContainer);
+    cardFooter.appendChild(buttonsContainer);
+
+    card.appendChild(cardHeader);
+    card.appendChild(cardBody);
+    card.appendChild(cardFooter);
+    header.appendChild(card);
+
+    // Toggle Collapse Logic
+    if (usersToShow.length > 1) {
+        cardHeader.onclick = () => {
+            const isCollapsed = cardBody.classList.contains('collapsed');
+            if (isCollapsed) {
+                cardBody.classList.remove('collapsed');
+                cardHeader.querySelector('span:last-child').style.transform = 'rotate(0deg)';
+            } else {
+                cardBody.classList.add('collapsed');
+                cardHeader.querySelector('span:last-child').style.transform = 'rotate(-90deg)';
+            }
+        };
+    } else {
+        // Reset transform if single user
+        // cardBody.style.display = 'block'; // ensure visible
     }
 
 
     if (isAutoCenterEnabled && hasMarkers) {
-        // Increase padding to avoid hiding markers behind the top overlay
-        map.fitBounds(bounds, { padding: [50, 50], paddingTopLeft: [0, 150], maxZoom: 18 });
-    }
-
-    // Hide "Show My Location" toggle if showing owner
-    // Match specific container structure in HTML: parent of label is div.mapProximity
-    const mapProximityDiv = document.querySelector('.map-header .switch').parentElement;
-    if (mapProximityDiv) {
-        if (showOwnerLocation) {
-            mapProximityDiv.style.display = 'none';
-        } else {
-            mapProximityDiv.style.display = 'flex';
-        }
+        // Adjust padding based on overlay height assumption
+        map.fitBounds(bounds, { padding: [50, 50], paddingTopLeft: [0, 250], maxZoom: 18 });
     }
 
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
@@ -745,18 +899,42 @@ function closeMap() {
 }
 
 function saveModalName() {
-    const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
     const newName = elements.modalInput.value.trim();
 
-    if (newName === "") {
-        delete names[currentEditingEmail];
+    if (currentEditingEmail === 'OWNER') {
+        // Update Config
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        config.apiUserName = newName;
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        // Update input in config view too if user goes back
+        elements.apiUserNameInput.value = newName;
     } else {
-        names[currentEditingEmail] = newName;
+        // Update Names Map
+        const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+        if (newName === "") {
+            delete names[currentEditingEmail];
+        } else {
+            names[currentEditingEmail] = newName;
+        }
+        localStorage.setItem(NAMES_KEY, JSON.stringify(names));
     }
 
-    localStorage.setItem(NAMES_KEY, JSON.stringify(names));
     closeModal();
-    fetchData();
+    // Refresh UI to show changes
+    if (elements.mapView.classList.contains('active')) {
+        updateMapMarkers();
+    } else {
+        // If in dashboard, simple fetch to redraw
+        // Or clearer: just call updateUI if we had data? 
+        // We have 'lastLocations' and 'ownerLocation' in memory.
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)); // refresh config
+        const data = { locations: lastLocations };
+        // We need to re-render. FetchData does it.
+        // Or just re-render list?
+        elements.membersList.innerHTML = '';
+        // Let's just fetchData to be safe and simple
+        fetchData();
+    }
 }
 
 function closeModal() {
@@ -791,7 +969,8 @@ elements.modal.addEventListener('click', (e) => {
 });
 elements.scanQrBtn.addEventListener('click', startScan);
 elements.stopScanBtn.addEventListener('click', stopScan);
-elements.closeMapBtn.addEventListener('click', closeMap);
-elements.recenterMapBtn.addEventListener('click', recenterMap);
+// attributes removed from elements object, listeners handled dynamically
+// elements.closeMapBtn.addEventListener('click', closeMap);
+// elements.recenterMapBtn.addEventListener('click', recenterMap);
 
 init();

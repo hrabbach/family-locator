@@ -184,17 +184,41 @@ button:active {
     color: white;
 }
 
+.member-card.owner-card {
+    border-color: #ffd700;
+    /* Gold */
+    background: rgba(255, 215, 0, 0.05);
+}
+
 .member-checkbox-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-right: 0.5rem;
+    width: 40px;
+    /* STRICT FIXED WIDTH */
+    min-width: 40px;
+    margin-right: 1rem;
 }
 
+/* Owner Card Specifics for Alignment */
+.owner-card .member-checkbox-container {
+    visibility: visible;
+    /* Must be visible to take up space, but content hidden */
+}
 
+/* Hide the pseudo-element or any content instead of visibility:hidden on container */
+.owner-card .member-checkbox-container * {
+    display: none;
+}
 
+/* Custom Checkbox Styling */
 .member-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 0.5rem;
+    /* Little extra nudge */
 }
 
 .member-email {
@@ -293,16 +317,153 @@ button:active {
     transform: translateX(-50%);
     z-index: 1000;
     width: 95%;
-    max-width: 700px;
+    max-width: 400px;
+    /* Compact width */
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.map-header>* {
+    pointer-events: auto;
+}
+
+/* Unified Map Card */
+.map-unified-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+}
+
+.map-card-header {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.map-card-header:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.map-card-body {
+    max-height: 40vh;
+    overflow-y: auto;
+    transition: max-height 0.3s ease;
+}
+
+.map-card-body.collapsed {
+    max-height: 0;
+}
+
+.map-member-row {
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.map-member-row:last-child {
+    border-bottom: none;
+}
+
+.map-member-row.is-owner {
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.map-card-footer {
     padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.avatar-small {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.map-overlay-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 40vh;
+    overflow-y: auto;
+    width: 100%;
+    scrollbar-width: none;
+    /* Hide scrollbar for cleaner look */
+}
+
+.map-overlay-list::-webkit-scrollbar {
+    display: none;
+}
+
+.map-user-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s ease-out;
+}
+
+.map-user-card.owner {
+    border-color: #ffd700;
 }
 
 .map-user-info {
+    flex: 1;
     display: flex;
     flex-direction: column;
+}
+
+.map-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #mapContainer {

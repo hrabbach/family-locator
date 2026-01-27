@@ -41,7 +41,9 @@ The tool uses the following endpoint:
 - **Context-Aware UI**: "Show My Location" toggle is automatically hidden when viewing the Owner's location to prevent confusion.
 - **Enhanced Map Visualization**: Permanent labels on markers for instant identification, and smart padding to prevent markers from being hidden behind UI overlays.
 - **Unified Dashboard**: API Owner appears at the top of the member list with a distinct style for easy monitoring.
+- **Direct Name Editing**: Edit display names (for both members and the owner) directly from the dashboard for a seamless experience.
+- **Advanced Map Overlay**: When multiple members are selected, the map overlay displays a single, unified card with collapsible details for everyone (including the owner if enabled), keeping the view clean.
 
-### Current Version: v1.2.2
+### Current Version: v1.3.3
 
 
