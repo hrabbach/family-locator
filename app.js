@@ -38,6 +38,13 @@ const elements = {
     mapLastRefresh: document.getElementById('mapLastRefresh'),
     toggleProximity: document.getElementById('toggleProximity'),
     distanceBadge: document.getElementById('distanceBadge'),
+
+    // Modal
+    modal: document.getElementById('modalBackdrop'),
+    modalEmail: document.getElementById('modalEmail'),
+    modalInput: document.getElementById('newNameInput'),
+    modalSaveBtn: document.getElementById('saveModal'),
+    modalCancelBtn: document.getElementById('cancelModal'),
 };
 
 let currentEditingEmail = null;

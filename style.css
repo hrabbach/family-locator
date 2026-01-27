@@ -672,9 +672,10 @@ input:checked+.slider:before {
     }
 
     .member-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
+        flex-direction: row;
+        /* KEEP ROW ON MOBILE */
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .member-meta {
