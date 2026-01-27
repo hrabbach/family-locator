@@ -33,14 +33,19 @@ const elements = {
     mapLastRefresh: document.getElementById('mapLastRefresh'),
     toggleProximity: document.getElementById('toggleProximity'),
     distanceBadge: document.getElementById('distanceBadge'),
-    recenterMapBtn: document.getElementById('recenterMapBtn')
+    recenterMapBtn: document.getElementById('recenterMapBtn'),
+    viewSelectedBtn: document.getElementById('viewSelectedBtn')
 };
 
 let currentEditingEmail = null;
 let html5QrCode = null;
 let map = null;
-let marker = null;
-let currentMapMemberEmail = null;
+let memberMarkers = {}; // Object to store markers by email
+let selectedMemberEmails = new Set();
+let showOwnerLocation = false;
+let ownerLocation = null;
+let ownerMarker = null;
+let currentMapMemberEmail = null; // Deprecated, but keeping for compatibility if needed, though we should switch to selectedMemberEmails logic
 let userMarker = null;
 let userLocation = null;
 let proximityEnabled = false;
@@ -51,12 +56,41 @@ let isAutoCenterEnabled = true;
 // Initialize
 function init() {
     registerServiceWorker();
+
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailsParam = urlParams.get('emails');
+    const showOwnerParam = urlParams.get('show_owner');
+
+    if (showOwnerParam === 'true') {
+        showOwnerLocation = true;
+    }
+
+    if (emailsParam) {
+        if (emailsParam === 'all') {
+            // We can't select all yet because we don't have the data, 
+            // but we can set a flag or handle it after fetch.
+            // For now, let's just mark a flag.
+            selectedMemberEmails.add('ALL');
+        } else {
+            const emails = emailsParam.split(',').map(e => e.trim());
+            emails.forEach(e => selectedMemberEmails.add(e));
+        }
+    }
+
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
     if (config && config.baseUrl && config.apiKey) {
         showDashboard();
         startTracking();
-        // Try to start user tracking globally for dashboard distances
         startUserTracking();
+
+        // If we have URL params, switch to map immediately after a short delay to allow fetch
+        if (selectedMemberEmails.size > 0 || showOwnerLocation) {
+            // We need data first, so we rely on fetchData callback or similar?
+            // Or just switch view and let the map update when data comes in.
+            elements.mapView.classList.add('active');
+            elements.dashboardView.classList.remove('active');
+        }
     } else {
         showConfig();
     }
@@ -179,7 +213,24 @@ async function fetchData() {
 
         const data = await response.json();
         lastLocations = data.locations || [];
+
+        // Handle "ALL" selection now that we have data
+        if (selectedMemberEmails.has('ALL')) {
+            selectedMemberEmails.clear();
+            lastLocations.forEach(loc => selectedMemberEmails.add(loc.email));
+        }
+
+        if (showOwnerLocation) {
+            fetchOwnerLocation(config);
+        }
+
         updateUI(data);
+
+        // Update map if active
+        if (elements.mapView.classList.contains('active')) {
+            updateMapMarkers();
+        }
+
         elements.lastUpdated.innerText = `Last updated: ${new Date().toLocaleTimeString([], { hour12: false })}`;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -189,16 +240,58 @@ async function fetchData() {
     }
 }
 
+async function fetchOwnerLocation(config) {
+    try {
+        // Fetch last 24 hours of points for the API key owner
+        // We use a large window to ensure we get at least one point
+        // and order by desc to get the latest.
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0]; // Actually end_at expects date or datetime? Swagger says string, desc "End date".
+        // Let's try to just use valid params for /api/v1/points
+        // The swagger says `start_at` and `end_at`.
+
+        const params = new URLSearchParams({
+            api_key: config.apiKey,
+            start_at: yesterday, // approximate
+            per_page: 1,
+            order: 'desc'
+            // We might need to specify a wide range.
+        });
+
+        const response = await fetch(`${config.baseUrl}/api/v1/points?${params.toString()}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                ownerLocation = data[0];
+            } else if (data.points && Array.isArray(data.points) && data.points.length > 0) {
+                // Adjust depending on actual API response structure if it's nested
+                ownerLocation = data.points[0];
+            }
+        }
+    } catch (e) {
+        console.error("Error fetching owner location", e);
+    }
+}
+
 function updateUI(data) {
     if (!data.locations || !Array.isArray(data.locations)) return;
 
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+
+    // Check if we need to show the View Selected button
+    const hasSelection = selectedMemberEmails.size > 0;
+    elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
+    elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
+    elements.viewSelectedBtn.onclick = () => {
+        showMap();
+    };
 
     elements.membersList.innerHTML = data.locations.map(member => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
         const isDefault = displayName === member.email;
+        const isSelected = selectedMemberEmails.has(member.email);
 
         // Calculate distance if user location is available
         let distanceHtml = '';
@@ -207,16 +300,18 @@ function updateUI(data) {
             distanceHtml = `<div class="member-distance">${dist.toFixed(2)} km away</div>`;
         }
 
-        if (currentMapMemberEmail === member.email) {
-            updateMapPosition(member, displayName);
-        }
-
         return `
             <div class="member-card">
+                 <div class="member-checkbox-container">
+                    <input type="checkbox" class="member-checkbox" 
+                        ${isSelected ? 'checked' : ''} 
+                        onchange="toggleMemberSelection(this, '${member.email}')"
+                    >
+                </div>
                 <div class="avatar">${member.email_initial}</div>
                 <div class="member-info">
                     <div class="member-email">
-                        <span class="member-display-name" onclick="showMap('${member.email}')" style="cursor: pointer; text-decoration: underline;">${displayName}</span>
+                        <span class="member-display-name" onclick="showSingleMemberMap('${member.email}')" style="cursor: pointer; text-decoration: underline;">${displayName}</span>
                         ${!isDefault ? `<span class="member-email-addr">(${member.email})</span>` : ''}
                         <button class="edit-name-btn" onclick="editName('${member.email}')">Edit</button>
                     </div>
@@ -237,6 +332,28 @@ function updateUI(data) {
     }).join('');
 }
 
+function toggleMemberSelection(checkbox, email) {
+    if (checkbox.checked) {
+        selectedMemberEmails.add(email);
+    } else {
+        selectedMemberEmails.delete(email);
+    }
+    // Update button visibility/text
+    const hasSelection = selectedMemberEmails.size > 0;
+    elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
+    elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
+}
+
+function showSingleMemberMap(email) {
+    // If we click a specific name, we just show that one person?
+    // User requested: "select more than one... shown on the map simultaneously".
+    // But behavior for single click is "toggle map view directly".
+    // I think it's safest to CLEAR selection and select JUST this one, then show map.
+    selectedMemberEmails.clear();
+    selectedMemberEmails.add(email);
+    showMap();
+}
+
 function getBatteryClass(level) {
     if (level <= 20) return 'battery-low';
     if (level <= 50) return 'battery-mid';
@@ -253,7 +370,11 @@ function editName(email) {
 }
 
 function showMap(email) {
-    currentMapMemberEmail = email;
+    // email argument is optional/deprecated. If passed, it ensures it's in selection
+    if (email) {
+        selectedMemberEmails.add(email);
+    }
+
     elements.mapView.classList.add('active');
     elements.dashboardView.classList.remove('active');
 
@@ -261,55 +382,25 @@ function showMap(email) {
     fetchData();
 }
 
-function updateMapPosition(member, displayName) {
-    const lat = member.latitude;
-    const lng = member.longitude;
-    const timeStr = formatRelativeTime(member.timestamp);
-
-    elements.mapUserName.innerText = displayName;
-    elements.mapUserEmail.innerText = member.email;
-    elements.mapBattery.innerText = `Battery: ${member.battery}% (${member.battery_status})`;
-    elements.mapLastSeen.innerText = `Seen: ${timeStr}`;
-    elements.mapLastRefresh.innerText = `Update: ${new Date().toLocaleTimeString([], { hour12: false })}`;
-
+function updateMapMarkers() {
     if (!map) {
-        map = L.map('mapContainer').setView([lat, lng], 18);
+        map = L.map('mapContainer').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
-        marker = L.marker([lat, lng]).addTo(map);
 
-        // Detect user interaction to disable auto-centering
-        map.on('dragstart', () => {
-            isAutoCenterEnabled = false;
-            elements.recenterMapBtn.style.display = 'block';
-        });
+        map.on('dragstart', () => { isAutoCenterEnabled = false; elements.recenterMapBtn.style.display = 'block'; });
+        map.on('zoomstart', (e) => { if (e.originalEvent) { isAutoCenterEnabled = false; elements.recenterMapBtn.style.display = 'block'; } });
 
-        map.on('zoomstart', (e) => {
-            // Leaflet zoom events often have the original event if user-triggered
-            if (e.originalEvent) {
-                isAutoCenterEnabled = false;
-                elements.recenterMapBtn.style.display = 'block';
-            }
-        });
-
-        // Handle proximity toggle
         elements.toggleProximity.addEventListener('change', (e) => {
             proximityEnabled = e.target.checked;
-            isAutoCenterEnabled = true; // Re-enable centering when toggled
+            isAutoCenterEnabled = true;
             elements.recenterMapBtn.style.display = 'none';
-            if (proximityEnabled) {
-                startUserTracking();
-            } else {
-                stopUserTracking();
-            }
-            // Trigger an immediate manual update/center
-            const member = lastLocations.find(m => m.email === currentMapMemberEmail);
-            if (member) updateMapPosition(member, elements.mapUserName.innerText);
+            if (proximityEnabled) startUserTracking(); else stopUserTracking();
+            updateMapMarkers();
         });
 
-        // Auto-enable if possible
         if ("geolocation" in navigator) {
             navigator.permissions.query({ name: 'geolocation' }).then(result => {
                 if (result.state === 'granted') {
@@ -317,30 +408,116 @@ function updateMapPosition(member, displayName) {
                     proximityEnabled = true;
                     isAutoCenterEnabled = true;
                     startUserTracking();
-                    // Immediate trigger
-                    const member = lastLocations.find(m => m.email === currentMapMemberEmail);
-                    if (member) updateMapPosition(member, elements.mapUserName.innerText);
                 }
             });
         }
-    } else {
-        marker.setLatLng([lat, lng]);
+    }
 
-        if (isAutoCenterEnabled) {
-            if (proximityEnabled && userLocation) {
-                const bounds = L.latLngBounds([
-                    [lat, lng],
-                    [userLocation.lat, userLocation.lng]
-                ]);
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-            } else {
-                map.setView([lat, lng], map.getZoom());
-            }
+    const bounds = L.latLngBounds();
+    let hasMarkers = false;
+
+    // 1. Members
+    const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+
+    // Remove old markers that are no longer selected or valid
+    for (const [email, m] of Object.entries(memberMarkers)) {
+        if (!selectedMemberEmails.has(email)) {
+            map.removeLayer(m);
+            delete memberMarkers[email];
         }
     }
 
-    updateProximityUI(lat, lng);
-    updateUserMarker(); // Ensure user marker is updated/shown whenever map updates
+    // Add or update markers for selected members
+    for (const email of selectedMemberEmails) {
+        const member = lastLocations.find(m => m.email === email);
+        if (member) {
+            const lat = member.latitude;
+            const lng = member.longitude;
+            const displayName = names[email] || email;
+            const popupContent = `<b>${displayName}</b><br>${new Date(member.timestamp * 1000).toLocaleString()}<br>Bat: ${member.battery}%`;
+
+            if (memberMarkers[email]) {
+                memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
+            } else {
+                memberMarkers[email] = L.marker([lat, lng]).addTo(map).bindPopup(popupContent);
+            }
+            bounds.extend([lat, lng]);
+            hasMarkers = true;
+        }
+    }
+
+    // 2. Owner Location
+    if (showOwnerLocation && ownerLocation) {
+        const lat = ownerLocation.latitude || ownerLocation.lat;
+        const lng = ownerLocation.longitude || ownerLocation.lon;
+
+        if (lat && lng) {
+            if (!ownerMarker) {
+                // Create a distinct marker for owner
+                const goldIcon = new L.Icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                ownerMarker = L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup("<b>API Owner</b><br>Last Known Location");
+            } else {
+                ownerMarker.setLatLng([lat, lng]);
+            }
+            bounds.extend([lat, lng]);
+            hasMarkers = true;
+        }
+    } else if (ownerMarker && !showOwnerLocation) {
+        map.removeLayer(ownerMarker);
+        ownerMarker = null;
+    }
+
+    // 3. User (Viewer) Location
+    if (userLocation && proximityEnabled) {
+        if (!userMarker) {
+            updateUserMarker(); // This creates it
+        } else {
+            userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+        }
+        bounds.extend([userLocation.lat, userLocation.lng]);
+        hasMarkers = true; // Count user as a marker for bounds? Maybe.
+    }
+
+    // Update Header Info (If only 1 selected, show details, otherwise generic)
+    if (selectedMemberEmails.size === 1) {
+        const email = Array.from(selectedMemberEmails)[0];
+        const member = lastLocations.find(m => m.email === email);
+        if (member) {
+            const displayName = names[email] || email;
+            elements.mapUserName.innerText = displayName;
+            elements.mapUserEmail.innerText = email;
+            elements.mapBattery.innerText = `Battery: ${member.battery}%`;
+            elements.mapLastSeen.innerText = formatRelativeTime(member.timestamp);
+            elements.mapLastRefresh.innerText = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+    } else {
+        elements.mapUserName.innerText = `${selectedMemberEmails.size} Members`;
+        elements.mapUserEmail.innerText = showOwnerLocation ? "(+ Owner)" : "";
+        elements.mapBattery.innerText = "";
+        elements.mapLastSeen.innerText = "";
+        elements.mapLastRefresh.innerText = `Updated: ${new Date().toLocaleTimeString()}`;
+    }
+
+
+    if (isAutoCenterEnabled && hasMarkers) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
+    }
+
+    // updateProximityUI(lat, lng); // Requires single target, disable if multiple
+    if (selectedMemberEmails.size === 1) {
+        const member = lastLocations.find(m => m.email === Array.from(selectedMemberEmails)[0]);
+        if (member) updateProximityUI(member.latitude, member.longitude);
+    } else {
+        elements.distanceBadge.style.display = 'none';
+    }
 }
 
 function startUserTracking() {
@@ -360,18 +537,8 @@ function startUserTracking() {
             updateUI({ locations: lastLocations });
         }
 
-        if (currentMapMemberEmail) {
-            const member = lastLocations.find(m => m.email === currentMapMemberEmail);
-            if (member) {
-                updateProximityUI(member.latitude, member.longitude);
-                if (map && isAutoCenterEnabled) {
-                    const bounds = L.latLngBounds([
-                        [member.latitude, member.longitude],
-                        [userLocation.lat, userLocation.lng]
-                    ]);
-                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-                }
-            }
+        if (elements.mapView.classList.contains('active')) {
+            updateMapMarkers(); // This handles calculating bounds etc
         }
     }, (error) => {
         console.error("Geolocation error:", error);
@@ -433,19 +600,21 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function recenterMap() {
     isAutoCenterEnabled = true;
     elements.recenterMapBtn.style.display = 'none';
-    const member = lastLocations.find(m => m.email === currentMapMemberEmail);
-    if (member) updateMapPosition(member, elements.mapUserName.innerText);
+    updateMapMarkers();
 }
 
 function closeMap() {
     stopUserTracking();
     elements.mapView.classList.remove('active');
     elements.dashboardView.classList.add('active');
-    currentMapMemberEmail = null;
+    elements.dashboardView.classList.add('active');
+    // We do NOT clear selection here because user might want to go back to map with same selection.
+    // But maybe we should? "view selected" button still works.
     if (map) {
         map.remove();
         map = null;
-        marker = null;
+        memberMarkers = {};
+        ownerMarker = null;
     }
 }
 

@@ -10,6 +10,8 @@
     --danger-color: #da3633;
     --border-color: #30363d;
     --glass-blur: blur(10px);
+    --owner-color: #f1e05a;
+    /* Goldish yellow for owner */
 }
 
 * {
@@ -138,6 +140,20 @@ button:active {
     font-weight: bold;
     font-size: 1.2rem;
     color: white;
+}
+
+.member-checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 0.5rem;
+}
+
+.member-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--accent-color);
 }
 
 .member-info {

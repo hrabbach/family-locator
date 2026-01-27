@@ -33,3 +33,6 @@ The tool uses the following endpoint:
 - **QR Code Configuration**: Instant setup via JSON-encoded QR code scanning.
 - **Mobile Optimized**: Fully responsive design for portrait and landscape modes.
 - **Live Map View**: Full-screen OpenStreetMap integration (via Leaflet.js) with real-time tracking (10s refresh).
+- **Multi-Select Tracking**: Select multiple family members to view simultaneously on the map.
+- **URL Parameter Support**: Pre-select members via `?emails=...` or `?emails=all` and auto-launch map.
+- **Owner Location**: Option to include the API key owner's location on the map via `?show_owner=true`.
