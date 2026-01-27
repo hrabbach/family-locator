@@ -36,3 +36,6 @@ The tool uses the following endpoint:
 - **Multi-Select Tracking**: Select multiple family members to view simultaneously on the map.
 - **URL Parameter Support**: Pre-select members via `?emails=...` or `?emails=all` and auto-launch map.
 - **Owner Location**: Option to include the API key owner's location on the map via `?show_owner=true`.
+- **API User Identity**: Configure a display name for the API owner (e.g., "John") to appear on the map.
+- **Smart Location Fallback**: Automatically uses the API owner's last known location as "My Location" if device geolocation is unavailable or times out (10s).
+- **Context-Aware UI**: "Show My Location" toggle is automatically hidden when viewing the Owner's location to prevent confusion.

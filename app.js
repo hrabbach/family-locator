@@ -9,7 +9,9 @@ const elements = {
     configView: document.getElementById('configView'),
     dashboardView: document.getElementById('dashboardView'),
     baseUrlInput: document.getElementById('baseUrl'),
+    baseUrlInput: document.getElementById('baseUrl'),
     apiKeyInput: document.getElementById('apiKey'),
+    apiUserNameInput: document.getElementById('apiUserName'),
     saveBtn: document.getElementById('saveConfig'),
     logoutBtn: document.getElementById('logoutBtn'),
     membersList: document.getElementById('membersList'),
@@ -100,6 +102,7 @@ function showConfig() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     elements.baseUrlInput.value = config.baseUrl || '';
     elements.apiKeyInput.value = config.apiKey || '';
+    elements.apiUserNameInput.value = config.apiUserName || '';
     elements.configView.classList.add('active');
     elements.dashboardView.classList.remove('active');
     stopTracking();
@@ -125,13 +128,14 @@ function showDashboard() {
 function saveConfig() {
     const baseUrl = elements.baseUrlInput.value.trim().replace(/\/$/, "");
     const apiKey = elements.apiKeyInput.value.trim();
+    const apiUserName = elements.apiUserNameInput.value.trim();
 
     if (!baseUrl || !apiKey) {
         alert("Please fill in both fields");
         return;
     }
 
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ baseUrl, apiKey }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ baseUrl, apiKey, apiUserName }));
     showDashboard();
     startTracking();
 }
@@ -173,6 +177,8 @@ function onScanSuccess(decodedText) {
             elements.baseUrlInput.value = data.server_url.replace(/\/$/, "");
             elements.apiKeyInput.value = data.api_key;
             stopScan();
+            // Do not auto-save. Let user enter name.
+            alert("QR Code scanned! Please enter your name (optional) and click 'Start Tracking'.");
         } else {
             alert("Invalid QR Code format. Missing server_url or api_key.");
         }
@@ -446,14 +452,21 @@ function updateMapMarkers() {
         }
     }
 
-    // 2. Owner Location
+    // Owner Marker
     if (showOwnerLocation && ownerLocation) {
         const lat = ownerLocation.latitude || ownerLocation.lat;
         const lng = ownerLocation.longitude || ownerLocation.lon;
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        // Ensure we use the config name, fallback to "API Owner"
+        const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
+        const timestamp = ownerLocation.timestamp || ownerLocation.tst;
+        const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown time';
+        const batt = ownerLocation.battery || ownerLocation.batt || '?';
 
         if (lat && lng) {
+            const popupContent = `<b>${ownerName}</b><br>${timeStr}<br>Bat: ${batt}%`;
+
             if (!ownerMarker) {
-                // Create a distinct marker for owner
                 const goldIcon = new L.Icon({
                     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
                     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -463,9 +476,12 @@ function updateMapMarkers() {
                     shadowSize: [41, 41]
                 });
 
-                ownerMarker = L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup("<b>API Owner</b><br>Last Known Location");
+                ownerMarker = L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup(popupContent);
             } else {
-                ownerMarker.setLatLng([lat, lng]);
+                ownerMarker.setLatLng([lat, lng]).setPopupContent(popupContent);
+                if (ownerMarker.getPopup().isOpen()) {
+                    ownerMarker.openPopup(); // Refresh content if open
+                }
             }
             bounds.extend([lat, lng]);
             hasMarkers = true;
@@ -511,6 +527,17 @@ function updateMapMarkers() {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
     }
 
+    // Hide "Show My Location" toggle if showing owner
+    // Match specific container structure in HTML: parent of label is div.mapProximity
+    const mapProximityDiv = document.querySelector('.map-header .switch').parentElement;
+    if (mapProximityDiv) {
+        if (showOwnerLocation) {
+            mapProximityDiv.style.display = 'none';
+        } else {
+            mapProximityDiv.style.display = 'flex';
+        }
+    }
+
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
     if (selectedMemberEmails.size === 1) {
         const member = lastLocations.find(m => m.email === Array.from(selectedMemberEmails)[0]);
@@ -520,29 +547,76 @@ function updateMapMarkers() {
     }
 }
 
+// Fallback Logic variables
+let locationTimeout = null;
+
 function startUserTracking() {
-    if (!("geolocation" in navigator)) return;
+    // If showOwnerLocation is true, we don't track user at all (interface hidden)
+    if (showOwnerLocation) return;
+
+    if (!("geolocation" in navigator)) {
+        useOwnerLocationAsFallback();
+        return;
+    }
 
     if (watchId) navigator.geolocation.clearWatch(watchId);
+    if (locationTimeout) clearTimeout(locationTimeout);
+
+    // Set timeout for fallback
+    locationTimeout = setTimeout(() => {
+        console.warn("Geolocation timed out, using owner location fallback.");
+        useOwnerLocationAsFallback();
+    }, 10000);
 
     watchId = navigator.geolocation.watchPosition((position) => {
+        clearTimeout(locationTimeout); // Got location, cancel timeout
         userLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
         };
         updateUserMarker();
 
-        // Update dashboard distances if visible
         if (elements.dashboardView.classList.contains('active')) {
             updateUI({ locations: lastLocations });
         }
-
         if (elements.mapView.classList.contains('active')) {
-            updateMapMarkers(); // This handles calculating bounds etc
+            updateMapMarkers();
         }
     }, (error) => {
-        console.error("Geolocation error:", error);
+        console.warn("Geolocation failed, using owner location fallback.", error);
+        clearTimeout(locationTimeout);
+        useOwnerLocationAsFallback();
     }, { enableHighAccuracy: true });
+}
+
+function useOwnerLocationAsFallback() {
+    // Check if we have owner location; if not fetch it
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    if (!config) return;
+
+    // We can't use await here easily, so we handle promise
+    const setLocation = () => {
+        if (ownerLocation) {
+            const lat = ownerLocation.latitude || ownerLocation.lat;
+            const lng = ownerLocation.longitude || ownerLocation.lon;
+            if (lat && lng) {
+                userLocation = { lat, lng };
+                updateUserMarker();
+                if (elements.dashboardView.classList.contains('active')) {
+                    updateUI({ locations: lastLocations });
+                }
+                if (elements.mapView.classList.contains('active')) {
+                    updateMapMarkers();
+                }
+            }
+        }
+    };
+
+    if (!ownerLocation) {
+        fetchOwnerLocation(config).then(setLocation);
+    } else {
+        setLocation();
+    }
 }
 
 function stopUserTracking() {
