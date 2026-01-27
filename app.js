@@ -228,6 +228,9 @@ async function fetchData() {
 
         if (showOwnerLocation) {
             fetchOwnerLocation(config);
+        } else {
+            // Always fetch owner location now for the dashboard card
+            fetchOwnerLocation(config);
         }
 
         updateUI(data);
@@ -292,7 +295,45 @@ function updateUI(data) {
         showMap();
     };
 
-    elements.membersList.innerHTML = data.locations.map(member => {
+    elements.membersList.innerHTML = '';
+
+    // Prepend Owner Card if data available
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    if (ownerLocation) {
+        const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
+        const timestamp = ownerLocation.timestamp || ownerLocation.tst;
+        const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown';
+        const batt = ownerLocation.battery || ownerLocation.batt || '?';
+        const batteryClass = getBatteryClass(batt);
+
+        const ownerCard = `
+            <div class="member-card owner-card">
+                 <div class="member-checkbox-container" style="visibility: hidden;">
+                    <!-- Placeholder to align with list -->
+                    <div style="width: 20px; height: 20px; margin-right: 1rem;"></div>
+                </div>
+                <div class="avatar" style="background: #ffd700; color: #333;">O</div>
+                <div class="member-info">
+                    <div class="member-email">
+                        <span class="member-display-name" style="color: #ffd700;">${ownerName}</span>
+                         <span class="member-email-addr">(Owner)</span>
+                    </div>
+                    <div class="member-location">
+                        Lat: ${(ownerLocation.latitude || ownerLocation.lat).toFixed(5)}, Lon: ${(ownerLocation.longitude || ownerLocation.lon).toFixed(5)}
+                    </div>
+                </div>
+                <div class="member-meta">
+                    <div class="battery ${batteryClass}">
+                        <span>${batt}%</span>
+                    </div>
+                    <div class="timestamp">${timeStr}</div>
+                </div>
+            </div>
+         `;
+        elements.membersList.innerHTML += ownerCard;
+    }
+
+    elements.membersList.innerHTML += data.locations.map(member => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
@@ -444,8 +485,14 @@ function updateMapMarkers() {
 
             if (memberMarkers[email]) {
                 memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
+                // Update tooltip if exists, or rebind? Leaflet doesn't have setTooltipContent handy on marker if not opened? 
+                // It does: setTooltipContent
+                memberMarkers[email].setTooltipContent(displayName);
             } else {
-                memberMarkers[email] = L.marker([lat, lng]).addTo(map).bindPopup(popupContent);
+                memberMarkers[email] = L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup(popupContent)
+                    .bindTooltip(displayName, { permanent: true, direction: 'bottom', className: 'marker-label' });
             }
             bounds.extend([lat, lng]);
             hasMarkers = true;
@@ -476,12 +523,18 @@ function updateMapMarkers() {
                     shadowSize: [41, 41]
                 });
 
-                ownerMarker = L.marker([lat, lng], { icon: goldIcon }).addTo(map).bindPopup(popupContent);
+                ownerMarker = L.marker([lat, lng], { icon: goldIcon })
+                    .addTo(map)
+                    .bindPopup(popupContent)
+                    .bindTooltip(ownerName, { permanent: true, direction: 'bottom', className: 'marker-label' });
             } else {
                 ownerMarker.setLatLng([lat, lng]).setPopupContent(popupContent);
+                ownerMarker.setTooltipContent(ownerName);
                 if (ownerMarker.getPopup().isOpen()) {
                     ownerMarker.openPopup(); // Refresh content if open
                 }
+            } else {
+                ownerMarker.setTooltipContent(ownerName);
             }
             bounds.extend([lat, lng]);
             hasMarkers = true;
@@ -524,7 +577,8 @@ function updateMapMarkers() {
 
 
     if (isAutoCenterEnabled && hasMarkers) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
+        // Increase padding to avoid hiding markers behind the top overlay
+        map.fitBounds(bounds, { padding: [50, 50], paddingTopLeft: [0, 150], maxZoom: 18 });
     }
 
     // Hide "Show My Location" toggle if showing owner

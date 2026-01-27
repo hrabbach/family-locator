@@ -39,3 +39,6 @@ The tool uses the following endpoint:
 - **API User Identity**: Configure a display name for the API owner (e.g., "John") to appear on the map.
 - **Smart Location Fallback**: Automatically uses the API owner's last known location as "My Location" if device geolocation is unavailable or times out (10s).
 - **Context-Aware UI**: "Show My Location" toggle is automatically hidden when viewing the Owner's location to prevent confusion.
+- **Enhanced Map Visualization**: Permanent labels on markers for instant identification, and smart padding to prevent markers from being hidden behind UI overlays.
+- **Unified Dashboard**: API Owner appears at the top of the member list with a distinct style for easy monitoring.
+
