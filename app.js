@@ -533,8 +533,6 @@ function updateMapMarkers() {
                 if (ownerMarker.getPopup().isOpen()) {
                     ownerMarker.openPopup(); // Refresh content if open
                 }
-            } else {
-                ownerMarker.setTooltipContent(ownerName);
             }
             bounds.extend([lat, lng]);
             hasMarkers = true;
