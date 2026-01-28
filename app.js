@@ -87,10 +87,15 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+function getMemberColorByIndex(index) {
+    if (index < 0) return MEMBER_COLORS[0];
+    return MEMBER_COLORS[index % MEMBER_COLORS.length];
+}
+
 function getMemberColor(email, locations) {
     if (!email || !locations) return MEMBER_COLORS[0];
     const index = locations.findIndex(m => m.email === email);
-    return index >= 0 ? MEMBER_COLORS[index % MEMBER_COLORS.length] : MEMBER_COLORS[0];
+    return getMemberColorByIndex(index);
 }
 
 // Initialize
@@ -380,7 +385,7 @@ function updateUI(data) {
         elements.membersList.innerHTML += ownerCard;
     }
 
-    elements.membersList.innerHTML += data.locations.map(member => {
+    elements.membersList.innerHTML += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
@@ -402,7 +407,7 @@ function updateUI(data) {
                         data-action="toggle-selection" data-email="${escapeHtml(member.email)}"
                     >
                 </div>
-                <div class="avatar" style="background: ${getMemberColor(member.email, data.locations).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
+                <div class="avatar" style="background: ${getMemberColorByIndex(index).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" data-action="show-single-map" data-email="${escapeHtml(member.email)}" style="cursor: pointer; text-decoration: underline;">${escapeHtml(displayName)}</span>
