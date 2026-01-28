@@ -645,6 +645,12 @@ function updateMapMarkers() {
     const chevronRotation = isMapOverlayCollapsed ? '-90deg' : '0deg';
     const chevron = `<span style="font-size: 0.8rem; transform: rotate(${chevronRotation}); transition: transform 0.2s;">▼</span>`;
 
+    // 2. Build Card Content
+    // Header
+    const titleText = usersToShow.length === 1
+        ? usersToShow[0].name
+        : `Tracking ${usersToShow.length} Members`;
+
     const cardHeader = document.createElement('div');
     cardHeader.className = 'map-card-header';
     cardHeader.innerHTML = `<span>${titleText}</span> ${usersToShow.length > 1 ? chevron : ''}`;
