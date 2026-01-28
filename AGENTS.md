@@ -47,6 +47,6 @@ The tool uses the following endpoint:
 - **Persistent Overlay State**: Layout choice (collapsed/expanded) is preserved across automatic data refreshes.
 - **Live Reload Countdown**: Real-time feedback in the map header showing the seconds remaining until the next update.
 
-### Current Version: v1.5.1
+### Current Version: v1.6.0
 
 
