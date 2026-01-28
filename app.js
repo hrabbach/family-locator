@@ -77,6 +77,16 @@ const MEMBER_COLORS = [
     { name: 'indigo', hex: '#3f51b5', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' } // Fallback icon
 ];
 
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function getMemberColor(email, locations) {
     if (!email || !locations) return MEMBER_COLORS[0];
     const index = locations.findIndex(m => m.email === email);
@@ -347,12 +357,12 @@ function updateUI(data) {
                  <div class="member-checkbox-container">
                     <!-- Placeholder to align with list -->
                 </div>
-                <div class="avatar" style="background: #ffd700; color: #333;">${ownerName.charAt(0).toUpperCase()}</div>
+                <div class="avatar" style="background: #ffd700; color: #333;">${escapeHtml(ownerName.charAt(0).toUpperCase())}</div>
                 <div class="member-info">
                     <div class="member-email">
-                        <span class="member-display-name" style="color: #ffd700;">${ownerName}</span>
+                        <span class="member-display-name" style="color: #ffd700;">${escapeHtml(ownerName)}</span>
                          <span class="member-email-addr">(Owner)</span>
-                         <button class="edit-name-btn" onclick="editName('OWNER')">Edit</button>
+                         <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
                     </div>
                     <div class="member-location">
                         Lat: ${lat}, Lon: ${lon}
@@ -361,9 +371,9 @@ function updateUI(data) {
                 <div class="member-meta">
                     <div class="battery ${batteryClass}">
                         <span>${batt}%</span>
-                        <small>${ownerLocation.battery_status || 'unplugged'}</small>
+                        <small>${escapeHtml(ownerLocation.battery_status || 'unplugged')}</small>
                     </div>
-                    <div class="timestamp" style="font-size: 0.7rem;">${timeStr}</div>
+                    <div class="timestamp" style="font-size: 0.7rem;">${escapeHtml(timeStr)}</div>
                 </div>
             </div>
          `;
@@ -389,15 +399,15 @@ function updateUI(data) {
                  <div class="member-checkbox-container">
                     <input type="checkbox" class="member-checkbox" 
                         ${isSelected ? 'checked' : ''} 
-                        onchange="toggleMemberSelection(this, '${member.email}')"
+                        data-action="toggle-selection" data-email="${escapeHtml(member.email)}"
                     >
                 </div>
-                <div class="avatar" style="background: ${getMemberColor(member.email, data.locations).hex}; color: white;">${member.email_initial}</div>
+                <div class="avatar" style="background: ${getMemberColor(member.email, data.locations).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
                 <div class="member-info">
                     <div class="member-email">
-                        <span class="member-display-name" onclick="showSingleMemberMap('${member.email}')" style="cursor: pointer; text-decoration: underline;">${displayName}</span>
-                        ${!isDefault ? `<span class="member-email-addr">(${member.email})</span>` : ''}
-                        <button class="edit-name-btn" onclick="editName('${member.email}')">Edit</button>
+                        <span class="member-display-name" data-action="show-single-map" data-email="${escapeHtml(member.email)}" style="cursor: pointer; text-decoration: underline;">${escapeHtml(displayName)}</span>
+                        ${!isDefault ? `<span class="member-email-addr">(${escapeHtml(member.email)})</span>` : ''}
+                        <button class="edit-name-btn" data-action="edit-name" data-email="${escapeHtml(member.email)}">Edit</button>
                     </div>
                     <div class="member-location">
                         Lat: ${member.latitude.toFixed(5)}, Lon: ${member.longitude.toFixed(5)}
@@ -407,9 +417,9 @@ function updateUI(data) {
                 <div class="member-meta">
                     <div class="battery ${batteryClass}">
                         <span>${member.battery}%</span>
-                        <small>${member.battery_status}</small>
+                        <small>${escapeHtml(member.battery_status)}</small>
                     </div>
-                    <div class="timestamp" style="font-size: 0.7rem;">${timeStr}</div>
+                    <div class="timestamp" style="font-size: 0.7rem;">${escapeHtml(timeStr)}</div>
                 </div>
             </div>
         `;
@@ -528,13 +538,13 @@ function updateMapMarkers() {
             const lat = member.latitude;
             const lng = member.longitude;
             const displayName = names[email] || email;
-            const popupContent = `<b>${displayName}</b><br>${new Date(member.timestamp * 1000).toLocaleString()}<br>Bat: ${member.battery}%`;
+            const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%`;
 
             if (memberMarkers[email]) {
                 memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
                 // Update tooltip if exists, or rebind? Leaflet doesn't have setTooltipContent handy on marker if not opened? 
                 // It does: setTooltipContent
-                memberMarkers[email].setTooltipContent(displayName);
+                memberMarkers[email].setTooltipContent(escapeHtml(displayName));
             } else {
                 const colorCfg = getMemberColor(email, lastLocations);
                 const customIcon = new L.Icon({
@@ -549,7 +559,7 @@ function updateMapMarkers() {
                 memberMarkers[email] = L.marker([lat, lng], { icon: customIcon })
                     .addTo(map)
                     .bindPopup(popupContent)
-                    .bindTooltip(displayName, { permanent: true, direction: 'bottom', className: 'marker-label' });
+                    .bindTooltip(escapeHtml(displayName), { permanent: true, direction: 'bottom', className: 'marker-label' });
             }
             bounds.extend([lat, lng]);
             hasMarkers = true;
@@ -568,7 +578,7 @@ function updateMapMarkers() {
         const batt = ownerLocation.battery || ownerLocation.batt || '?';
 
         if (lat && lng) {
-            const popupContent = `<b>${ownerName}</b><br>${timeStr}<br>Bat: ${batt}%`;
+            const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%`;
 
             if (!ownerMarker) {
                 const goldIcon = new L.Icon({
@@ -583,10 +593,10 @@ function updateMapMarkers() {
                 ownerMarker = L.marker([lat, lng], { icon: goldIcon })
                     .addTo(map)
                     .bindPopup(popupContent)
-                    .bindTooltip(ownerName, { permanent: true, direction: 'bottom', className: 'marker-label' });
+                    .bindTooltip(escapeHtml(ownerName), { permanent: true, direction: 'bottom', className: 'marker-label' });
             } else {
                 ownerMarker.setLatLng([lat, lng]).setPopupContent(popupContent);
-                ownerMarker.setTooltipContent(ownerName);
+                ownerMarker.setTooltipContent(escapeHtml(ownerName));
                 if (ownerMarker.getPopup().isOpen()) {
                     ownerMarker.openPopup(); // Refresh content if open
                 }
@@ -663,7 +673,7 @@ function updateMapMarkers() {
     cardHeader.className = 'map-card-header';
     cardHeader.innerHTML = `
         <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(titleText)}</span>
             <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${secondsToRefresh}s)</span>
         </div>
         ${usersToShow.length > 1 ? chevron : ''}
@@ -681,11 +691,11 @@ function updateMapMarkers() {
             const row = document.createElement('div');
             row.className = `map-member-row ${u.isOwner ? 'is-owner' : ''}`;
             row.innerHTML = `
-                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : u.color}; color: #333;">${u.initial}</div>
+                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : u.color}; color: #333;">${escapeHtml(u.initial)}</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${u.name}</div>
+                    <div style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${escapeHtml(u.name)}</div>
                     <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                        ${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${timeStr}
+                        ${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${escapeHtml(timeStr)}
                     </div>
                 </div>
             `;
@@ -1025,5 +1035,29 @@ elements.stopScanBtn.addEventListener('click', stopScan);
 // attributes removed from elements object, listeners handled dynamically
 // elements.closeMapBtn.addEventListener('click', closeMap);
 // elements.recenterMapBtn.addEventListener('click', recenterMap);
+
+// Global Event Delegation for Dynamic Elements
+document.addEventListener('click', (e) => {
+    // Find closest element with data-action
+    const target = e.target.closest('[data-action]');
+    if (!target) return;
+
+    const action = target.dataset.action;
+    const email = target.dataset.email;
+
+    if (action === 'edit-name') {
+        editName(email);
+    } else if (action === 'show-single-map') {
+        showSingleMemberMap(email);
+    }
+});
+
+document.addEventListener('change', (e) => {
+    const target = e.target.closest('[data-action="toggle-selection"]');
+    if (target) {
+        const email = target.dataset.email;
+        toggleMemberSelection(target, email);
+    }
+});
 
 init();
