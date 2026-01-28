@@ -43,7 +43,10 @@ The tool uses the following endpoint:
 - **Unified Dashboard**: API Owner appears at the top of the member list with a distinct style for easy monitoring.
 - **Direct Name Editing**: Edit display names (for both members and the owner) directly from the dashboard for a seamless experience.
 - **Advanced Map Overlay**: When multiple members are selected, the map overlay displays a single, unified card with collapsible details for everyone (including the owner if enabled), keeping the view clean.
+- **Color-Coded Identification**: Synchronized unique colors between dashboard avatars and map markers for easy recognition.
+- **Persistent Overlay State**: Layout choice (collapsed/expanded) is preserved across automatic data refreshes.
+- **Live Reload Countdown**: Real-time feedback in the map header showing the seconds remaining until the next update.
 
-### Current Version: v1.5.0
+### Current Version: v1.5.1
 
 

@@ -1,24 +1,40 @@
-<!-- Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License. -->
 # Family Locator
 
-A lightweight, self-hosted Progressive Web App (PWA) designed to track family members' locations using the Dawarich API. This tool provides a real-time dashboard and interactive map view for staying connected with your loved ones.
+A lightweight, self-hosted Progressive Web App (PWA) designed to track family members' locations using the Dawarich API. This tool provides a premium, mobile-first dashboard and an advanced interactive map view for staying connected with your loved ones.
 
 ## Key Features
 
-- **Real-Time Dashboard**: See all family members at a glance, including their last known location, battery status, and relative "last seen" time.
-- **Proximity Tracking**: View the real-time distance between your current location and family members directly on the dashboard.
-- **Interactive Map View**: 
-    - Full-screen Leaflet map integration.
-    - Optional "Show My Location" toggle to see yourself on the map alongside family members.
-    - **Smart Auto-Fit**: The map automatically zooms and pans to keep both you and the family member in view.
-    - **Manual Control**: Auto-centering pauses when you interact with the map, with a dedicated "Recenter" button to snap back.
-- **PWA Support**: Install the app on your mobile home screen for a native app-like experience.
-- **Secure Configuration**: Stores your Dawarich API key and server URL locally in your browser.
-- **QR Code Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile.
+-   **Real-Time Dashboard**: See all family members at a glance, including their last known location, battery status (with charging indicators), and human-readable "last seen" times.
+-   **Color-Coded Identification**: Each family member is assigned a unique, high-contrast color that synchronizes between their dashboard avatar and their map marker for instant recognition.
+-   **Dynamic Customization**:
+    -   **Display Names**: Edit member and owner names directly from the dashboard for a personalized experience.
+    -   **Owner Initials**: The owner's avatar dynamically reflects their configured name (e.g., 'H' for Holger).
+-   **Advanced Map Mode**:
+    -   **Multi-Selection**: Select one or multiple members to view their paths and current locations simultaneously.
+    -   **Unified Mobile Overlay**: A clean, collapsible overlay provides detailed info for everyone on the map without cluttering the view.
+    -   **Persistent State**: The map overlay remembers if you've minimized it, respecting your layout choice across automatic refreshes.
+    -   **Live Reload Countdown**: A real-time timer in the map header shows exactly when the next data update will arrive.
+-   **Proximity Tracking**: View real-time distances between your current location and family members using high-accuracy Haversine calculations.
+-   **Smart Map Control**:
+    -   **Auto-Fit**: Intelligently zooms and pans to keep all selected markers in view.
+    -   **Manual Override**: Auto-centering pauses when you interact with the map, with a one-tap "Recenter" button to snap back to the action.
+-   **PWA Support**: Fully responsive design with manifest and service worker support—install it on your mobile home screen for a native app feel.
+-   **Swift Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile or via secure manual entry.
 
-## Functionality
+## URL Parameters
 
-The app periodically fetches location data (every 10 seconds) from your self-hosted Dawarich server. It calculates absolute and relative times for sightings and uses the Haversine formula for precise distance calculations between your GPS position and your family members.
+Automate the tracking view by passing parameters in the URL:
+
+-   **`emails=...`**: Pre-select family members to track on the map.
+    -   `?emails=all`: Selects all family members.
+    -   `?emails=user1@example.com,user2@example.com`: Selects specific members by email.
+-   **`show_owner=true`**: Automatically includes your own location (API owner) on the map alongside selected members.
+
+*Example*: `https://your-locator.com/?emails=all&show_owner=true`
+
+## How it Works
+
+The app periodically fetches location data (every 10 seconds) from your self-hosted Dawarich server. It handles everything client-side for privacy and speed, storing your API keys and configuration securely in local storage.
 
 ## Installation
 
@@ -30,4 +46,4 @@ Family Locator is built with standard web technologies (HTML, CSS, JS) and can b
 4.  (Optional) "Add to Home Screen" via your browser's menu to install as a PWA.
 
 ---
-*Maintained with built-in cache-busting and Service Worker support.*
+*Maintained with built-in cache-busting, high-performance Leaflet mapping, and Service Worker support.*
