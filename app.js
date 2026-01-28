@@ -737,8 +737,16 @@ function updateMapMarkers() {
 
 
     if (isAutoCenterEnabled && hasMarkers) {
-        // Adjust padding based on overlay height assumption
-        map.fitBounds(bounds, { padding: [50, 50], paddingTopLeft: [0, 250], maxZoom: 18 });
+        // Adjust padding based on overlay height assumption (Bottom overlay on mobile)
+        const isMobile = window.innerWidth <= 600;
+        const padding = isMobile ? [20, 20] : [50, 50];
+        const bottomPadding = isMobile ? 300 : 50; // Extra room for the footer card
+
+        map.fitBounds(bounds, {
+            padding: padding,
+            paddingBottomRight: [0, bottomPadding],
+            maxZoom: 18
+        });
     }
 
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
@@ -876,7 +884,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 function recenterMap() {
     isAutoCenterEnabled = true;
-    elements.recenterMapBtn.style.display = 'none';
+    const btn = document.getElementById('dynamicRecenterBtn');
+    if (btn) btn.style.display = 'none';
     updateMapMarkers();
 }
 
