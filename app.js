@@ -343,7 +343,7 @@ function updateUI(data) {
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
     elements.viewSelectedBtn.onclick = () => showMap();
 
-    elements.membersList.innerHTML = '';
+    let htmlContent = '';
 
     // Prepend Owner Card if data available
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
@@ -381,10 +381,10 @@ function updateUI(data) {
                 </div>
             </div>
          `;
-        elements.membersList.innerHTML += ownerCard;
+        htmlContent += ownerCard;
     }
 
-    elements.membersList.innerHTML += data.locations.map(member => {
+    htmlContent += data.locations.map(member => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
@@ -428,6 +428,8 @@ function updateUI(data) {
             </div>
         `;
     }).join('');
+
+    elements.membersList.innerHTML = htmlContent;
 }
 
 function toggleMemberSelection(checkbox, email) {
