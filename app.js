@@ -63,6 +63,25 @@ let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
 
+const MEMBER_COLORS = [
+    { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
+    { name: 'red', hex: '#CB2B3E', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' },
+    { name: 'green', hex: '#2AAD27', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' },
+    { name: 'orange', hex: '#CB8427', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png' },
+    { name: 'yellow', hex: '#CAC428', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png' },
+    { name: 'violet', hex: '#9C2BCB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' },
+    { name: 'grey', hex: '#7B7B7B', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png' },
+    { name: 'black', hex: '#3D3D3D', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png' },
+    { name: 'cyan', hex: '#1abc9c', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' }, // Fallback icon
+    { name: 'indigo', hex: '#3f51b5', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' } // Fallback icon
+];
+
+function getMemberColor(email, locations) {
+    if (!email || !locations) return MEMBER_COLORS[0];
+    const index = locations.findIndex(m => m.email === email);
+    return index >= 0 ? MEMBER_COLORS[index % MEMBER_COLORS.length] : MEMBER_COLORS[0];
+}
+
 // Initialize
 function init() {
     registerServiceWorker();
@@ -319,7 +338,7 @@ function updateUI(data) {
                  <div class="member-checkbox-container">
                     <!-- Placeholder to align with list -->
                 </div>
-                <div class="avatar" style="background: #ffd700; color: #333;">O</div>
+                <div class="avatar" style="background: #ffd700; color: #333;">${ownerName.charAt(0).toUpperCase()}</div>
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" style="color: #ffd700;">${ownerName}</span>
@@ -364,7 +383,7 @@ function updateUI(data) {
                         onchange="toggleMemberSelection(this, '${member.email}')"
                     >
                 </div>
-                <div class="avatar">${member.email_initial}</div>
+                <div class="avatar" style="background: ${getMemberColor(member.email, data.locations).hex}; color: white;">${member.email_initial}</div>
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" onclick="showSingleMemberMap('${member.email}')" style="cursor: pointer; text-decoration: underline;">${displayName}</span>
@@ -508,7 +527,17 @@ function updateMapMarkers() {
                 // It does: setTooltipContent
                 memberMarkers[email].setTooltipContent(displayName);
             } else {
-                memberMarkers[email] = L.marker([lat, lng])
+                const colorCfg = getMemberColor(email, lastLocations);
+                const customIcon = new L.Icon({
+                    iconUrl: colorCfg.icon,
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                memberMarkers[email] = L.marker([lat, lng], { icon: customIcon })
                     .addTo(map)
                     .bindPopup(popupContent)
                     .bindTooltip(displayName, { permanent: true, direction: 'bottom', className: 'marker-label' });
@@ -605,7 +634,8 @@ function updateMapMarkers() {
                 timestamp: member.timestamp,
                 battery: member.battery,
                 isOwner: false,
-                initial: member.email_initial
+                initial: member.email_initial,
+                color: getMemberColor(email, lastLocations).hex
             });
         }
     });
@@ -635,7 +665,7 @@ function updateMapMarkers() {
             const row = document.createElement('div');
             row.className = `map-member-row ${u.isOwner ? 'is-owner' : ''}`;
             row.innerHTML = `
-                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : 'var(--accent-color)'}; color: #333;">${u.initial}</div>
+                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : u.color}; color: #333;">${u.initial}</div>
                 <div style="flex: 1;">
                     <div style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${u.name}</div>
                     <div style="font-size: 0.75rem; color: var(--text-secondary);">

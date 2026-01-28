@@ -163,13 +163,13 @@ button:active {
 .member-checkbox:checked::after {
     content: '';
     position: absolute;
-    left: 5px;
-    top: 1px;
-    width: 6px;
-    height: 12px;
+    left: 50%;
+    top: 45%;
+    width: 4px;
+    height: 9px;
     border: solid white;
     border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+    transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .member-checkbox:hover {
