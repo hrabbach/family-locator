@@ -77,14 +77,18 @@ const MEMBER_COLORS = [
     { name: 'indigo', hex: '#3f51b5', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' } // Fallback icon
 ];
 
+const HTML_ESCAPE_MAP = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+};
+const HTML_ESCAPE_REGEX = /[&<>"']/g;
+
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
 }
 
 function getMemberColorByIndex(index) {
@@ -344,7 +348,7 @@ function updateUI(data) {
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
     elements.viewSelectedBtn.onclick = () => showMap();
 
-    elements.membersList.innerHTML = '';
+    let htmlContent = '';
 
     // Prepend Owner Card if data available
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
@@ -382,10 +386,10 @@ function updateUI(data) {
                 </div>
             </div>
          `;
-        elements.membersList.innerHTML += ownerCard;
+        htmlContent += ownerCard;
     }
 
-    elements.membersList.innerHTML += data.locations.map((member, index) => {
+    htmlContent += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
@@ -429,6 +433,8 @@ function updateUI(data) {
             </div>
         `;
     }).join('');
+
+    elements.membersList.innerHTML = htmlContent;
 }
 
 function toggleMemberSelection(checkbox, email) {
