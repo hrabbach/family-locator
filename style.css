@@ -249,6 +249,8 @@ button:active {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    flex-shrink: 0;
+    /* Priority over email */
 }
 
 .member-email-addr {
@@ -737,6 +739,7 @@ input:checked+.slider:before {
 
     .member-display-name {
         font-size: 1rem;
+        flex-shrink: 0;
     }
 
     .member-email-addr {

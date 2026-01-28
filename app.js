@@ -477,17 +477,6 @@ function updateMapMarkers() {
             if (proximityEnabled) startUserTracking(); else stopUserTracking();
             updateMapMarkers();
         });
-
-        if ("geolocation" in navigator) {
-            navigator.permissions.query({ name: 'geolocation' }).then(result => {
-                if (result.state === 'granted') {
-                    elements.toggleProximity.checked = true;
-                    proximityEnabled = true;
-                    isAutoCenterEnabled = true;
-                    startUserTracking();
-                }
-            });
-        }
     }
 
     const bounds = L.latLngBounds();
