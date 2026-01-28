@@ -62,6 +62,7 @@ let proximityEnabled = false;
 let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
+let isMapOverlayCollapsed = false;
 
 const MEMBER_COLORS = [
     { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
@@ -640,14 +641,9 @@ function updateMapMarkers() {
         }
     });
 
-    // 2. Build Card Content
-    // Header
-    const titleText = usersToShow.length === 1
-        ? usersToShow[0].name
-        : `Tracking ${usersToShow.length} Members`;
-
     // Toggle chevron
-    const chevron = `<span style="font-size: 0.8rem; transform: rotate(0deg); transition: transform 0.2s;">▼</span>`;
+    const chevronRotation = isMapOverlayCollapsed ? '-90deg' : '0deg';
+    const chevron = `<span style="font-size: 0.8rem; transform: rotate(${chevronRotation}); transition: transform 0.2s;">▼</span>`;
 
     const cardHeader = document.createElement('div');
     cardHeader.className = 'map-card-header';
@@ -655,7 +651,7 @@ function updateMapMarkers() {
 
     // Body (List of users)
     const cardBody = document.createElement('div');
-    cardBody.className = 'map-card-body';
+    cardBody.className = 'map-card-body' + (isMapOverlayCollapsed ? ' collapsed' : '');
 
     if (usersToShow.length === 0) {
         cardBody.innerHTML = `<div class="map-member-row" style="justify-content: center; color: var(--text-secondary);">No members selected</div>`;
@@ -751,13 +747,13 @@ function updateMapMarkers() {
     // Toggle Collapse Logic
     if (usersToShow.length > 1) {
         cardHeader.onclick = () => {
-            const isCollapsed = cardBody.classList.contains('collapsed');
-            if (isCollapsed) {
-                cardBody.classList.remove('collapsed');
-                cardHeader.querySelector('span:last-child').style.transform = 'rotate(0deg)';
-            } else {
+            isMapOverlayCollapsed = !isMapOverlayCollapsed;
+            if (isMapOverlayCollapsed) {
                 cardBody.classList.add('collapsed');
                 cardHeader.querySelector('span:last-child').style.transform = 'rotate(-90deg)';
+            } else {
+                cardBody.classList.remove('collapsed');
+                cardHeader.querySelector('span:last-child').style.transform = 'rotate(0deg)';
             }
         };
     } else {
@@ -921,6 +917,7 @@ function recenterMap() {
 
 function closeMap() {
     stopUserTracking();
+    isMapOverlayCollapsed = false; // Reset for next use
     elements.mapView.classList.remove('active');
     elements.dashboardView.classList.add('active');
     elements.dashboardView.classList.add('active');
