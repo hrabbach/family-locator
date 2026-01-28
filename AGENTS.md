@@ -44,6 +44,6 @@ The tool uses the following endpoint:
 - **Direct Name Editing**: Edit display names (for both members and the owner) directly from the dashboard for a seamless experience.
 - **Advanced Map Overlay**: When multiple members are selected, the map overlay displays a single, unified card with collapsible details for everyone (including the owner if enabled), keeping the view clean.
 
-### Current Version: v1.4.2
+### Current Version: v1.5.0
 
 

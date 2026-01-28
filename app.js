@@ -221,13 +221,20 @@ function startTracking() {
     clearInterval(countdownInterval);
 
     refreshInterval = setInterval(fetchData, 10000);
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
 
-    secondsToRefresh = 10;
-    countdownInterval = setInterval(() => {
-        secondsToRefresh--;
-        if (secondsToRefresh <= 0) secondsToRefresh = 10;
-        elements.refreshStatus.innerText = `Refreshing in ${secondsToRefresh}s`;
-    }, 1000);
+function updateCountdown() {
+    secondsToRefresh--;
+    if (secondsToRefresh < 0) secondsToRefresh = 10;
+
+    const txt = `Refreshing in ${secondsToRefresh}s`;
+    elements.refreshStatus.innerText = txt;
+
+    const mapReloadCountdown = document.getElementById('mapReloadCountdown');
+    if (mapReloadCountdown) {
+        mapReloadCountdown.innerText = `(${secondsToRefresh}s)`;
+    }
 }
 
 function stopTracking() {
@@ -239,6 +246,7 @@ async function fetchData() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
     if (!config) return;
 
+    secondsToRefresh = 10; // Reset countdown on actual fetch
     elements.refreshStatus.classList.add('refreshing');
 
     try {
@@ -653,7 +661,13 @@ function updateMapMarkers() {
 
     const cardHeader = document.createElement('div');
     cardHeader.className = 'map-card-header';
-    cardHeader.innerHTML = `<span>${titleText}</span> ${usersToShow.length > 1 ? chevron : ''}`;
+    cardHeader.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
+            <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${secondsToRefresh}s)</span>
+        </div>
+        ${usersToShow.length > 1 ? chevron : ''}
+    `;
 
     // Body (List of users)
     const cardBody = document.createElement('div');
