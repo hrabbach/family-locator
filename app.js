@@ -389,11 +389,7 @@ function updateUI(data) {
         htmlContent += ownerCard;
     }
 
-<<<<<<< HEAD
-    elements.membersList.innerHTML += data.locations.map((member, index) => {
-=======
-    htmlContent += data.locations.map(member => {
->>>>>>> origin/main
+    htmlContent += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
