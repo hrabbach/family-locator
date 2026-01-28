@@ -260,6 +260,9 @@ async function fetchData() {
     elements.refreshStatus.classList.add('refreshing');
 
     try {
+        // Start fetching owner location in parallel to save time
+        const ownerFetchPromise = fetchOwnerLocation(config);
+
         const response = await fetch(`${config.baseUrl}/api/v1/families/locations?api_key=${config.apiKey}`);
         if (!response.ok) throw new Error('API request failed');
 
@@ -272,12 +275,8 @@ async function fetchData() {
             lastLocations.forEach(loc => selectedMemberEmails.add(loc.email));
         }
 
-        if (showOwnerLocation) {
-            fetchOwnerLocation(config);
-        } else {
-            // Always fetch owner location now for the dashboard card
-            fetchOwnerLocation(config);
-        }
+        // Await owner location fetch to avoid race condition in UI update
+        await ownerFetchPromise;
 
         updateUI(data);
 
