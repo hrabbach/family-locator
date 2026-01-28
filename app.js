@@ -333,8 +333,9 @@ function updateUI(data) {
                 <div class="member-meta">
                     <div class="battery ${batteryClass}">
                         <span>${batt}%</span>
+                        <small>${ownerLocation.battery_status || 'unplugged'}</small>
                     </div>
-                    <div class="timestamp">${timeStr}</div>
+                    <div class="timestamp" style="font-size: 0.7rem;">${timeStr}</div>
                 </div>
             </div>
          `;
@@ -380,7 +381,7 @@ function updateUI(data) {
                         <span>${member.battery}%</span>
                         <small>${member.battery_status}</small>
                     </div>
-                    <div class="timestamp">${timeStr}</div>
+                    <div class="timestamp" style="font-size: 0.7rem;">${timeStr}</div>
                 </div>
             </div>
         `;
