@@ -52,12 +52,13 @@ The tool uses the following endpoint:
 ### Version History
 - **v1.6.0**: Initial PWA release with Leaflet integration.
 - **v1.7.0**: Performance and safety optimizations by Jules.
+- **v2.0.1**: Optimized mobile layout to hide coordinates when addresses are present.
 - **v2.0.0**: Added Reverse Geocoding support and address caching.
 
 ### Recent Optimizations (by Jules)
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v2.0.0
+### Current Version: v2.0.1
 
 

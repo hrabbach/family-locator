@@ -249,7 +249,8 @@ button:active {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
-    flex: 0 1 auto; /* Allow growth/shrink but don't force it */
+    flex: 0 1 auto;
+    /* Allow growth/shrink but don't force it */
 }
 
 .member-email-addr {
@@ -259,7 +260,8 @@ button:active {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 1 1 auto; /* Take up remaining space, but can shrink */
+    flex: 1 1 auto;
+    /* Take up remaining space, but can shrink */
     min-width: 0;
 }
 
@@ -762,4 +764,9 @@ input:checked+.slider:before {
     .modal-content {
         padding: 1.5rem;
     }
+
+    .member-location.has-address .member-coords {
+        display: none;
+    }
+}
 }

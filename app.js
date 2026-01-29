@@ -489,8 +489,8 @@ function updateUI(data) {
                          <span class="member-email-addr">(Owner)</span>
                          <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
                     </div>
-                    <div class="member-location">
-                        Lat: ${lat}, Lon: ${lon}
+                    <div class="member-location ${ownerLocation.address ? 'has-address' : ''}">
+                        <span class="member-coords">Lat: ${lat}, Lon: ${lon}</span>
                         ${ownerLocation.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(ownerLocation.address)}</div>` : ''}
                     </div>
                 </div>
@@ -535,8 +535,8 @@ function updateUI(data) {
                         ${!isDefault ? `<span class="member-email-addr">(${escapeHtml(member.email)})</span>` : ''}
                         <button class="edit-name-btn" data-action="edit-name" data-email="${escapeHtml(member.email)}">Edit</button>
                     </div>
-                    <div class="member-location">
-                        Lat: ${member.latitude.toFixed(5)}, Lon: ${member.longitude.toFixed(5)}
+                    <div class="member-location ${member.address ? 'has-address' : ''}">
+                        <span class="member-coords">Lat: ${member.latitude.toFixed(5)}, Lon: ${member.longitude.toFixed(5)}</span>
                         ${member.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(member.address)}</div>` : ''}
                         ${distanceHtml}
                     </div>
