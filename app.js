@@ -16,6 +16,10 @@ const elements = {
     baseUrlInput: document.getElementById('baseUrl'),
     apiKeyInput: document.getElementById('apiKey'),
     apiUserNameInput: document.getElementById('apiUserName'),
+    geocodeEnabled: document.getElementById('geocodeEnabled'),
+    geocodeSettings: document.getElementById('geocodeSettings'),
+    photonUrl: document.getElementById('photonUrl'),
+    photonApiKey: document.getElementById('photonApiKey'),
 
     // Buttons
     saveBtn: document.getElementById('saveConfig'),
@@ -63,6 +67,7 @@ let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
 let isMapOverlayCollapsed = false;
+const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
 
 const MEMBER_COLORS = [
     { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
@@ -89,6 +94,94 @@ const HTML_ESCAPE_REGEX = /[&<>"']/g;
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
+}
+
+// Geocoding Logic
+function getCoordinateKey(lat, lon) {
+    // Round to 4 decimal places (~11 meters) to group nearby points
+    return `${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`;
+}
+
+function resolveAddress(member) {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    if (!config || !config.geocodeEnabled) return null;
+
+    const lat = member.latitude || member.lat;
+    const lon = member.longitude || member.lon;
+
+    if (!lat || !lon) return null;
+
+    const key = getCoordinateKey(lat, lon);
+    if (addressCache.has(key)) {
+        return addressCache.get(key);
+    }
+
+    // Cache miss: Trigger fetch in background
+    fetchAddressFromApi(lat, lon, config);
+    return null; // Return null for now, next refresh will pick it up
+}
+
+async function fetchAddressFromApi(lat, lon, config) {
+    const key = getCoordinateKey(lat, lon);
+    // Double check to prevent duplicate in-flight requests if we had a way to track them,
+    // but here we just check if it's already resolved.
+    if (addressCache.has(key)) return;
+
+    // Use a placeholder to prevent repeated fetches while one is in flight?
+    // For simplicity, we might skip this, but 10s refresh might trigger multiple.
+    // Let's set a temporary value.
+    addressCache.set(key, null); // Pending
+
+    try {
+        const url = `${config.photonUrl}/reverse?lat=${lat}&lon=${lon}`;
+        const headers = {};
+        if (config.photonApiKey) {
+            headers['X-API-KEY'] = config.photonApiKey;
+        }
+
+        const response = await fetch(url, { headers });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+                const p = data.features[0].properties;
+                // Construct a nice string: Name (if any), Street, City
+                const parts = [];
+                if (p.name) parts.push(p.name);
+                if (p.street) {
+                    let street = p.street;
+                    if (p.housenumber) street += ` ${p.housenumber}`;
+                    parts.push(street);
+                } else if (p.housenumber) { // Fallback if street is missing but number exists (rare)
+                    parts.push(p.housenumber);
+                }
+
+                // If no name and no street, maybe just city/country?
+                if (parts.length === 0) {
+                    if (p.city || p.town || p.village) parts.push(p.city || p.town || p.village);
+                    else if (p.country) parts.push(p.country);
+                } else {
+                     // Add city context if we have street/name
+                     if (p.city || p.town || p.village) parts.push(p.city || p.town || p.village);
+                }
+
+                const address = parts.join(', ');
+                addressCache.set(key, address);
+            } else {
+                addressCache.set(key, "Unknown Location");
+            }
+        } else {
+            addressCache.delete(key); // Retry next time
+        }
+    } catch (e) {
+        console.error("Geocoding error", e);
+        addressCache.delete(key); // Retry next time
+    }
+
+    // Manage cache size (simple LRU-ish: delete oldest if too big)
+    if (addressCache.size > 200) {
+        const firstKey = addressCache.keys().next().value;
+        addressCache.delete(firstKey);
+    }
 }
 
 function getMemberColor(email, locations) {
@@ -146,6 +239,13 @@ function showConfig() {
     elements.baseUrlInput.value = config.baseUrl || '';
     elements.apiKeyInput.value = config.apiKey || '';
     elements.apiUserNameInput.value = config.apiUserName || '';
+
+    // Geocoding
+    elements.geocodeEnabled.checked = config.geocodeEnabled || false;
+    elements.photonUrl.value = config.photonUrl || 'https://photon.komoot.io';
+    elements.photonApiKey.value = config.photonApiKey || '';
+    elements.geocodeSettings.style.display = elements.geocodeEnabled.checked ? 'block' : 'none';
+
     elements.configView.classList.add('active');
     elements.dashboardView.classList.remove('active');
     stopTracking();
@@ -173,12 +273,25 @@ function saveConfig() {
     const apiKey = elements.apiKeyInput.value.trim();
     const apiUserName = elements.apiUserNameInput.value.trim();
 
+    const geocodeEnabled = elements.geocodeEnabled.checked;
+    const photonUrl = elements.photonUrl.value.trim().replace(/\/$/, "");
+    const photonApiKey = elements.photonApiKey.value.trim();
+
     if (!baseUrl || !apiKey) {
         alert("Please fill in both fields");
         return;
     }
 
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ baseUrl, apiKey, apiUserName }));
+    const config = {
+        baseUrl,
+        apiKey,
+        apiUserName,
+        geocodeEnabled,
+        photonUrl: photonUrl || 'https://photon.komoot.io', // Default if empty
+        photonApiKey
+    };
+
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     showDashboard();
     startTracking();
 }
@@ -283,6 +396,14 @@ async function fetchData() {
         // Await owner location fetch to avoid race condition in UI update
         await ownerFetchPromise;
 
+        // Resolve addresses
+        if (ownerLocation) {
+            ownerLocation.address = resolveAddress(ownerLocation);
+        }
+        lastLocations.forEach(m => {
+            m.address = resolveAddress(m);
+        });
+
         updateUI(data);
 
         // Update map if active
@@ -370,6 +491,7 @@ function updateUI(data) {
                     </div>
                     <div class="member-location">
                         Lat: ${lat}, Lon: ${lon}
+                        ${ownerLocation.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(ownerLocation.address)}</div>` : ''}
                     </div>
                 </div>
                 <div class="member-meta">
@@ -415,6 +537,7 @@ function updateUI(data) {
                     </div>
                     <div class="member-location">
                         Lat: ${member.latitude.toFixed(5)}, Lon: ${member.longitude.toFixed(5)}
+                        ${member.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(member.address)}</div>` : ''}
                         ${distanceHtml}
                     </div>
                 </div>
@@ -534,7 +657,7 @@ function updateMapMarkers() {
             const lat = member.latitude;
             const lng = member.longitude;
             const displayName = names[email] || email;
-            const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%`;
+            const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtml(member.address)}` : ''}`;
 
             if (memberMarkers[email]) {
                 memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
@@ -574,7 +697,7 @@ function updateMapMarkers() {
         const batt = ownerLocation.battery || ownerLocation.batt || '?';
 
         if (lat && lng) {
-            const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%`;
+            const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%${ownerLocation.address ? `<br>${escapeHtml(ownerLocation.address)}` : ''}`;
 
             if (!ownerMarker) {
                 const goldIcon = new L.Icon({
@@ -1028,6 +1151,11 @@ function setupEventListeners() {
     });
     elements.scanQrBtn.addEventListener('click', startScan);
     elements.stopScanBtn.addEventListener('click', stopScan);
+
+    // Geocode Toggle
+    elements.geocodeEnabled.addEventListener('change', (e) => {
+        elements.geocodeSettings.style.display = e.target.checked ? 'block' : 'none';
+    });
 
     // Global Event Delegation for Dynamic Elements
     document.addEventListener('click', (e) => {
