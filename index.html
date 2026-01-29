@@ -18,11 +18,11 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="icon" type="image/png" href="./icon.png?v=2.1.0">
-    <link rel="stylesheet" href="./style.css?v=2.1.0">
-    <link rel="manifest" href="./manifest.json?v=2.1.0">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.3.0">
+    <link rel="stylesheet" href="./style.css?v=2.3.0">
+    <link rel="manifest" href="./manifest.json?v=2.3.0">
     <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.1.0">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.3.0">
 </head>
 
 <body>
@@ -60,6 +60,10 @@
                         <label for="photonApiKey">Photon API Key (Optional)</label>
                         <input type="password" id="photonApiKey" placeholder="X-API-KEY Header">
                     </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="keepAwakeEnabled" class="member-checkbox">
+                    <label for="keepAwakeEnabled" style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Keep Screen Awake</label>
                 </div>
             </div>
 
@@ -122,9 +126,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.1.0</a>
+        class="version-tag">v2.3.0</a>
 
-    <script src="./app.js?v=2.1.0"></script>
+    <script src="./app.js?v=2.3.0"></script>
 </body>
 
 </html>

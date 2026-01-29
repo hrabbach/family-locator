@@ -20,6 +20,7 @@ const elements = {
     geocodeSettings: document.getElementById('geocodeSettings'),
     photonUrl: document.getElementById('photonUrl'),
     photonApiKey: document.getElementById('photonApiKey'),
+    keepAwakeEnabled: document.getElementById('keepAwakeEnabled'),
 
     // Buttons
     saveBtn: document.getElementById('saveConfig'),
@@ -68,6 +69,7 @@ let lastLocations = [];
 let isAutoCenterEnabled = true;
 let isMapOverlayCollapsed = false;
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
+let wakeLock = null;
 
 const MEMBER_COLORS = [
     { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
@@ -94,6 +96,34 @@ const HTML_ESCAPE_REGEX = /[&<>"']/g;
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
+}
+
+// Wake Lock Logic
+async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    if (wakeLock !== null && !wakeLock.released) {
+        return;
+    }
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock released');
+        });
+        console.log('Wake Lock acquired');
+    } catch (err) {
+        console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+    }
+}
+
+async function releaseWakeLock() {
+    if (wakeLock !== null) {
+        try {
+            await wakeLock.release();
+            wakeLock = null;
+        } catch (e) {
+            console.error('Wake Lock release error', e);
+        }
+    }
 }
 
 // Geocoding Logic
@@ -245,6 +275,7 @@ function showConfig() {
     elements.photonUrl.value = config.photonUrl || 'https://photon.komoot.io';
     elements.photonApiKey.value = config.photonApiKey || '';
     elements.geocodeSettings.style.display = elements.geocodeEnabled.checked ? 'block' : 'none';
+    elements.keepAwakeEnabled.checked = config.keepAwakeEnabled || false;
 
     elements.configView.classList.add('active');
     elements.dashboardView.classList.remove('active');
@@ -285,6 +316,7 @@ function saveConfig() {
     const geocodeEnabled = elements.geocodeEnabled.checked;
     const photonUrl = elements.photonUrl.value.trim().replace(/\/$/, "");
     const photonApiKey = elements.photonApiKey.value.trim();
+    const keepAwakeEnabled = elements.keepAwakeEnabled.checked;
 
     if (!baseUrl || !apiKey) {
         alert("Please fill in both fields");
@@ -297,7 +329,8 @@ function saveConfig() {
         apiUserName,
         geocodeEnabled,
         photonUrl: photonUrl || 'https://photon.komoot.io', // Default if empty
-        photonApiKey
+        photonApiKey,
+        keepAwakeEnabled
     };
 
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
@@ -353,6 +386,11 @@ function onScanSuccess(decodedText) {
 }
 
 function startTracking() {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    if (config && config.keepAwakeEnabled) {
+        requestWakeLock();
+    }
+
     fetchData();
     clearInterval(refreshInterval);
     clearInterval(countdownInterval);
@@ -377,6 +415,7 @@ function updateCountdown() {
 function stopTracking() {
     clearInterval(refreshInterval);
     clearInterval(countdownInterval);
+    releaseWakeLock();
 }
 
 async function fetchData() {
