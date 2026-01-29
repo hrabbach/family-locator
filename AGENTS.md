@@ -47,6 +47,14 @@ The tool uses the following endpoint:
 - **Persistent Overlay State**: Layout choice (collapsed/expanded) is preserved across automatic data refreshes.
 - **Live Reload Countdown**: Real-time feedback in the map header showing the seconds remaining until the next update.
 
-### Current Version: v1.6.0
+### Version History
+- **v1.6.0**: Initial PWA release with Leaflet integration.
+- **v1.7.0**: Performance and safety optimizations by Jules.
+
+### Recent Optimizations (by Jules)
+- **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
+- **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
+
+### Current Version: v1.7.0
 
 
