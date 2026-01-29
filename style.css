@@ -249,8 +249,7 @@ button:active {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
-    flex-shrink: 0;
-    /* Priority over email */
+    flex: 0 1 auto; /* Allow growth/shrink but don't force it */
 }
 
 .member-email-addr {
@@ -260,7 +259,8 @@ button:active {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    flex: 1 1 auto; /* Take up remaining space, but can shrink */
+    min-width: 0;
 }
 
 .edit-name-btn {
@@ -739,15 +739,10 @@ input:checked+.slider:before {
 
     .member-display-name {
         font-size: 1rem;
-        flex-shrink: 0;
     }
 
     .member-email-addr {
         display: inline;
-        width: auto;
-        margin-top: 0;
-        min-width: 0;
-        flex-shrink: 1;
     }
 
     .edit-name-btn {
