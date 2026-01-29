@@ -100,6 +100,7 @@ function getMemberColor(email, locations) {
 // Initialize
 function init() {
     registerServiceWorker();
+    setupEventListeners();
 
     // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -510,16 +511,6 @@ function updateMapMarkers() {
             }
         });
 
-        elements.toggleProximity.addEventListener('change', (e) => {
-            proximityEnabled = e.target.checked;
-            isAutoCenterEnabled = true;
-            // elements.recenterMapBtn.style.display = 'none'; // Removed static button reference
-            // Hide recenter button on toggle because we auto-center
-            const btn = document.getElementById('dynamicRecenterBtn');
-            if (btn) btn.style.display = 'none';
-            if (proximityEnabled) startUserTracking(); else stopUserTracking();
-            updateMapMarkers();
-        });
     }
 
     const bounds = L.latLngBounds();
@@ -955,7 +946,6 @@ function closeMap() {
     isMapOverlayCollapsed = false; // Reset for next use
     elements.mapView.classList.remove('active');
     elements.dashboardView.classList.add('active');
-    elements.dashboardView.classList.add('active');
     // We do NOT clear selection here because user might want to go back to map with same selection.
     // But maybe we should? "view selected" button still works.
     if (map) {
@@ -1027,42 +1017,67 @@ function formatRelativeTime(timestamp) {
     return `${absTime} (${relative})`;
 }
 
-// Event Listeners
-elements.saveBtn.addEventListener('click', saveConfig);
-elements.logoutBtn.addEventListener('click', showConfig);
-elements.modalSaveBtn.addEventListener('click', saveModalName);
-elements.modalCancelBtn.addEventListener('click', closeModal);
-elements.modal.addEventListener('click', (e) => {
-    if (e.target === elements.modal) closeModal();
-});
-elements.scanQrBtn.addEventListener('click', startScan);
-elements.stopScanBtn.addEventListener('click', stopScan);
-// attributes removed from elements object, listeners handled dynamically
-// elements.closeMapBtn.addEventListener('click', closeMap);
-// elements.recenterMapBtn.addEventListener('click', recenterMap);
+function setupEventListeners() {
+    // Buttons
+    elements.saveBtn.addEventListener('click', saveConfig);
+    elements.logoutBtn.addEventListener('click', showConfig);
+    elements.modalSaveBtn.addEventListener('click', saveModalName);
+    elements.modalCancelBtn.addEventListener('click', closeModal);
+    elements.modal.addEventListener('click', (e) => {
+        if (e.target === elements.modal) closeModal();
+    });
+    elements.scanQrBtn.addEventListener('click', startScan);
+    elements.stopScanBtn.addEventListener('click', stopScan);
 
-// Global Event Delegation for Dynamic Elements
-document.addEventListener('click', (e) => {
-    // Find closest element with data-action
-    const target = e.target.closest('[data-action]');
-    if (!target) return;
+    // Global Event Delegation for Dynamic Elements
+    document.addEventListener('click', (e) => {
+        // Find closest element with data-action
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
 
-    const action = target.dataset.action;
-    const email = target.dataset.email;
-
-    if (action === 'edit-name') {
-        editName(email);
-    } else if (action === 'show-single-map') {
-        showSingleMemberMap(email);
-    }
-});
-
-document.addEventListener('change', (e) => {
-    const target = e.target.closest('[data-action="toggle-selection"]');
-    if (target) {
+        const action = target.dataset.action;
         const email = target.dataset.email;
-        toggleMemberSelection(target, email);
-    }
-});
+
+        if (action === 'edit-name') {
+            editName(email);
+        } else if (action === 'show-single-map') {
+            showSingleMemberMap(email);
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        const target = e.target.closest('[data-action="toggle-selection"]');
+        if (target) {
+            const email = target.dataset.email;
+            toggleMemberSelection(target, email);
+        }
+    });
+
+    // Visibility API
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopTracking();
+        } else {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            if (config && config.baseUrl && config.apiKey) {
+                if (elements.dashboardView.classList.contains('active') || elements.mapView.classList.contains('active')) {
+                    startTracking();
+                }
+            }
+        }
+    });
+
+    // Proximity Toggle
+    elements.toggleProximity.addEventListener('change', (e) => {
+        proximityEnabled = e.target.checked;
+        isAutoCenterEnabled = true;
+        // elements.recenterMapBtn.style.display = 'none'; // Removed static button reference
+        // Hide recenter button on toggle because we auto-center
+        const btn = document.getElementById('dynamicRecenterBtn');
+        if (btn) btn.style.display = 'none';
+        if (proximityEnabled) startUserTracking(); else stopUserTracking();
+        updateMapMarkers();
+    });
+}
 
 init();
