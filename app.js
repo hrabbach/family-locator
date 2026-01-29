@@ -255,8 +255,17 @@ function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered', reg))
+                .then(reg => {
+                    console.log('SW Registered', reg);
+                })
                 .catch(err => console.log('SW Reg Failed', err));
+
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
+            });
         });
     }
 }
