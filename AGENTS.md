@@ -13,7 +13,8 @@ A self-hosted web tool to track family members' locations via a provided API.
 ## Technical Stack
 - Frontend: HTML/CSS/Vanilla JavaScript.
 - Backend (Static Serving): Nginx (Dockerized).
-- Storage: `localStorage` in the browser.
+- Storage: `localStorage` in the browser (Configuration, Name Mapping, Address Cache).
+- External APIs: Photon API for reverse geocoding (optional).
 
 ## API Specification
 The tool uses the following endpoint:
@@ -46,15 +47,17 @@ The tool uses the following endpoint:
 - **Color-Coded Identification**: Synchronized unique colors between dashboard avatars and map markers for easy recognition.
 - **Persistent Overlay State**: Layout choice (collapsed/expanded) is preserved across automatic data refreshes.
 - **Live Reload Countdown**: Real-time feedback in the map header showing the seconds remaining until the next update.
+- **Reverse Geocoding**: Optional address lookup via Photon API for all locations (cached locally for performance).
 
 ### Version History
 - **v1.6.0**: Initial PWA release with Leaflet integration.
 - **v1.7.0**: Performance and safety optimizations by Jules.
+- **v2.0.0**: Added Reverse Geocoding support and address caching.
 
 ### Recent Optimizations (by Jules)
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v1.7.0
+### Current Version: v2.0.0
 
 

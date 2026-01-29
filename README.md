@@ -18,6 +18,7 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 -   **Smart Map Control**:
     -   **Auto-Fit**: Intelligently zooms and pans to keep all selected markers in view.
     -   **Manual Override**: Auto-centering pauses when you interact with the map, with a one-tap "Recenter" button to snap back to the action.
+-   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 -   **PWA Support**: Fully responsive design with manifest and service worker support—install it on your mobile home screen for a native app feel.
 -   **Swift Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile or via secure manual entry.
 
@@ -35,6 +36,18 @@ Automate the tracking view by passing parameters in the URL:
 ## How it Works
 
 The app periodically fetches location data (every 10 seconds) from your self-hosted Dawarich server. It handles everything client-side for privacy and speed, storing your API keys and configuration securely in local storage.
+
+## Reverse Geocoding Setup
+
+To enable address lookup for your family members:
+
+1.  Open the **Settings** (or configuration view).
+2.  Check the box **"Enable Reverse Geocoding (Address Lookup)"**.
+3.  (Optional) Enter a custom **Photon API URL**. The default is `https://photon.komoot.io`.
+4.  (Optional) Provide a **Photon API Key** if required by your provider.
+5.  Click **"Start Tracking"** to save your changes.
+
+*Note: Addresses are cached locally to ensure high performance and minimize API usage.*
 
 ## Installation
 
