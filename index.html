@@ -47,11 +47,9 @@
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 1.5rem 0; padding-top: 1rem;">
-                <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" id="geocodeEnabled">
-                        Enable Reverse Geocoding (Address Lookup)
-                    </label>
+                <div class="form-group" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="geocodeEnabled" class="member-checkbox">
+                    <label for="geocodeEnabled" style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Enable Reverse Geocoding (Address Lookup)</label>
                 </div>
                 <div id="geocodeSettings" style="display: none; padding-left: 0.5rem; border-left: 2px solid var(--border-color); margin-left: 0.5rem;">
                     <div class="form-group">
