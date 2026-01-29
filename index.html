@@ -45,6 +45,26 @@
                 <label for="apiUserName">Your Name (Optional)</label>
                 <input type="text" id="apiUserName" placeholder="e.g., John">
             </div>
+
+            <div style="border-top: 1px solid var(--border-color); margin: 1.5rem 0; padding-top: 1rem;">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="geocodeEnabled">
+                        Enable Reverse Geocoding (Address Lookup)
+                    </label>
+                </div>
+                <div id="geocodeSettings" style="display: none; padding-left: 0.5rem; border-left: 2px solid var(--border-color); margin-left: 0.5rem;">
+                    <div class="form-group">
+                        <label for="photonUrl">Photon API URL</label>
+                        <input type="url" id="photonUrl" placeholder="https://photon.komoot.io">
+                    </div>
+                    <div class="form-group">
+                        <label for="photonApiKey">Photon API Key (Optional)</label>
+                        <input type="password" id="photonApiKey" placeholder="X-API-KEY Header">
+                    </div>
+                </div>
+            </div>
+
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
                 <button id="saveConfig" style="flex: 1;">Start Tracking</button>
                 <button id="scanQrBtn"
