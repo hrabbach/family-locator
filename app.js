@@ -70,6 +70,7 @@ let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
 let isMapOverlayCollapsed = false;
+let lastKnownAddresses = {}; // email -> address
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
 let wakeLock = null;
 
@@ -140,17 +141,26 @@ function resolveAddress(member) {
 
     const lat = member.latitude || member.lat;
     const lon = member.longitude || member.lon;
+    const email = member.email || 'OWNER';
 
     if (!lat || !lon) return null;
 
     const key = getCoordinateKey(lat, lon);
     if (addressCache.has(key)) {
-        return addressCache.get(key);
+        const cached = addressCache.get(key);
+        if (cached && cached !== "Unknown Location") {
+            lastKnownAddresses[email] = cached;
+            return cached;
+        }
+        if (cached === "Unknown Location") {
+            delete lastKnownAddresses[email];
+            return null;
+        }
     }
 
-    // Cache miss: Trigger fetch in background
+    // Cache miss or pending: return last known if available
     fetchAddressFromApi(lat, lon, config);
-    return null; // Return null for now, next refresh will pick it up
+    return lastKnownAddresses[email] || null;
 }
 
 async function fetchAddressFromApi(lat, lon, config) {

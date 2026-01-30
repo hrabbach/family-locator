@@ -288,6 +288,10 @@ button:active {
     color: var(--text-secondary);
 }
 
+.member-location.has-address .member-coords {
+    display: none;
+}
+
 .member-distance {
     color: var(--accent-color);
     font-weight: 500;
