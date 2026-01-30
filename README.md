@@ -18,9 +18,10 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 -   **Smart Map Control**:
     -   **Auto-Fit**: Intelligently zooms and pans to keep all selected markers in view.
     -   **Manual Override**: Auto-centering pauses when you interact with the map, with a one-tap "Recenter" button to snap back to the action.
--   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 -   **PWA Support**: Fully responsive design with manifest and service worker support—install it on your mobile home screen for a native app feel.
 -   **Swift Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile or via secure manual entry.
+-   **Screen Wake Lock**: Keep your device screen active while tracking to avoid interruptions.
+-   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 
 ## URL Parameters
 

@@ -38,9 +38,9 @@ The tool uses the following endpoint:
 - **URL Parameter Support**: Pre-select members via `?emails=...` or `?emails=all` and auto-launch map.
 - **Owner Location**: Option to include the API key owner's location on the map via `?show_owner=true`.
 - **API User Identity**: Configure a display name for the API owner (e.g., "John") to appear on the map.
-- **Smart Location Fallback**: Automatically uses the API owner's last known location as "My Location" if device geolocation is unavailable or times out (10s).
-- **Context-Aware UI**: "Show My Location" toggle is automatically hidden when viewing the Owner's location to prevent confusion.
 - **Enhanced Map Visualization**: Permanent labels on markers for instant identification, and smart padding to prevent markers from being hidden behind UI overlays.
+- **Screen Wake Lock**: Optional feature to keep the device screen active during tracking sessions.
+- **Smart Geolocation Fallback**: Automatically uses the API owner's last known location if device geolocation is unavailable or times out.
 - **Unified Dashboard**: API Owner appears at the top of the member list with a distinct style for easy monitoring.
 - **Direct Name Editing**: Edit display names (for both members and the owner) directly from the dashboard for a seamless experience.
 - **Advanced Map Overlay**: When multiple members are selected, the map overlay displays a single, unified card with collapsible details for everyone (including the owner if enabled), keeping the view clean.
@@ -50,6 +50,8 @@ The tool uses the following endpoint:
 - **Reverse Geocoding**: Optional address lookup via Photon API for all locations (cached locally for performance).
 
 ### Version History
+- **v2.3.2**: Prioritized display names on dashboard and fixed overlapping emails on mobile.
+- **v2.3.1**: Added Screen Wake Lock support for persistent tracking.
 - **v1.6.0**: Initial PWA release with Leaflet integration.
 - **v1.7.0**: Performance and safety optimizations by Jules.
 - **v2.0.1**: Optimized mobile layout to hide coordinates when addresses are present.
@@ -59,6 +61,6 @@ The tool uses the following endpoint:
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v2.0.1
+### Current Version: v2.3.2
 
 

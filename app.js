@@ -190,8 +190,8 @@ async function fetchAddressFromApi(lat, lon, config) {
                     if (p.city || p.town || p.village) parts.push(p.city || p.town || p.village);
                     else if (p.country) parts.push(p.country);
                 } else {
-                     // Add city context if we have street/name
-                     if (p.city || p.town || p.village) parts.push(p.city || p.town || p.village);
+                    // Add city context if we have street/name
+                    if (p.city || p.town || p.village) parts.push(p.city || p.town || p.village);
                 }
 
                 const address = parts.join(', ');
@@ -580,7 +580,6 @@ function updateUI(data) {
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" data-action="show-single-map" data-email="${escapeHtml(member.email)}" style="cursor: pointer; text-decoration: underline;">${escapeHtml(displayName)}</span>
-                        ${!isDefault ? `<span class="member-email-addr">(${escapeHtml(member.email)})</span>` : ''}
                         <button class="edit-name-btn" data-action="edit-name" data-email="${escapeHtml(member.email)}">Edit</button>
                     </div>
                     <div class="member-location ${member.address ? 'has-address' : ''}">
