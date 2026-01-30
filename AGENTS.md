@@ -50,6 +50,7 @@ The tool uses the following endpoint:
 - **Reverse Geocoding**: Optional address lookup via Photon API for all locations (cached locally for performance).
 
 ### Version History
+- **v2.4.0**: Added Remote Configuration via URL parameters and a "Share Configuration" feature.
 - **v2.3.2**: Prioritized display names on dashboard and fixed overlapping emails on mobile.
 - **v2.3.1**: Added Screen Wake Lock support for persistent tracking.
 - **v1.6.0**: Initial PWA release with Leaflet integration.
@@ -61,6 +62,6 @@ The tool uses the following endpoint:
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v2.3.2
+### Current Version: v2.4.0
 
 

@@ -28,6 +28,8 @@ const elements = {
     scanQrBtn: document.getElementById('scanQrBtn'),
     stopScanBtn: document.getElementById('stopScanBtn'),
     viewSelectedBtn: document.getElementById('viewSelectedBtn'),
+    shareConfigBtn: document.getElementById('shareConfigBtn'),
+    shareStatus: document.getElementById('shareStatus'),
 
     // Dashboard
     membersList: document.getElementById('membersList'),
@@ -220,10 +222,116 @@ function getMemberColor(email, locations) {
     return index >= 0 ? MEMBER_COLORS[index % MEMBER_COLORS.length] : MEMBER_COLORS[0];
 }
 
+function processUrlConfiguration() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const bulkConfig = urlParams.get('config');
+    let updated = false;
+
+    // 1. Process Bulk Config (Base64)
+    if (bulkConfig) {
+        try {
+            const decoded = JSON.parse(atob(bulkConfig));
+            if (decoded.config) {
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(decoded.config));
+                updated = true;
+            }
+            if (decoded.names) {
+                localStorage.setItem(NAMES_KEY, JSON.stringify(decoded.names));
+                updated = true;
+            }
+        } catch (e) {
+            console.error("Failed to parse bulk config from URL", e);
+        }
+    }
+
+    // 2. Process Individual Params
+    const server = urlParams.get('server');
+    const key = urlParams.get('key');
+    const name = urlParams.get('name');
+    const geocode = urlParams.get('geocode');
+    const photon = urlParams.get('photon');
+    const photonKey = urlParams.get('photonKey');
+    const awake = urlParams.get('awake');
+    const namesParam = urlParams.get('names'); // email:name;email:name
+
+    if (server || key || name || geocode || photon || photonKey || awake) {
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        if (server) config.baseUrl = server.replace(/\/$/, "");
+        if (key) config.apiKey = key;
+        if (name) config.apiUserName = name;
+        if (geocode) config.geocodeEnabled = geocode === 'true';
+        if (photon) config.photonUrl = photon.replace(/\/$/, "");
+        if (photonKey) config.photonApiKey = photonKey;
+        if (awake) config.keepAwakeEnabled = awake === 'true';
+
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        updated = true;
+    }
+
+    if (namesParam) {
+        const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+        const pairs = namesParam.split(';');
+        pairs.forEach(pair => {
+            const [email, n] = pair.split(':');
+            if (email && n) names[email.trim()] = n.trim();
+        });
+        localStorage.setItem(NAMES_KEY, JSON.stringify(names));
+        updated = true;
+    }
+
+    // Clear sensitive params from URL without reload
+    if (updated) {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+}
+
+function generateConfigUrl() {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const names = JSON.parse(localStorage.getItem(NAMES_KEY));
+
+    if (!config) return null;
+
+    const exportData = { config, names };
+    const base64 = btoa(JSON.stringify(exportData));
+    return `${window.location.origin}${window.location.pathname}?config=${base64}`;
+}
+
+async function copyConfigUrl() {
+    const url = generateConfigUrl();
+    if (!url) {
+        alert("No configuration to share. Please set up the app first.");
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(url);
+        elements.shareStatus.style.opacity = '1';
+        setTimeout(() => {
+            elements.shareStatus.style.opacity = '0';
+        }, 2000);
+    } catch (err) {
+        console.error("Failed to copy URL", err);
+        // Fallback for non-secure contexts or some mobile browsers
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+
+        elements.shareStatus.style.opacity = '1';
+        setTimeout(() => {
+            elements.shareStatus.style.opacity = '0';
+        }, 2000);
+    }
+}
+
 // Initialize
 function init() {
     registerServiceWorker();
     setupEventListeners();
+    processUrlConfiguration();
 
     // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -1198,6 +1306,7 @@ function setupEventListeners() {
     });
     elements.scanQrBtn.addEventListener('click', startScan);
     elements.stopScanBtn.addEventListener('click', stopScan);
+    elements.shareConfigBtn.addEventListener('click', copyConfigUrl);
 
     // Geocode Toggle
     elements.geocodeEnabled.addEventListener('change', (e) => {

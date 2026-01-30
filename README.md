@@ -18,21 +18,43 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 -   **Smart Map Control**:
     -   **Auto-Fit**: Intelligently zooms and pans to keep all selected markers in view.
     -   **Manual Override**: Auto-centering pauses when you interact with the map, with a one-tap "Recenter" button to snap back to the action.
--   **PWA Support**: Fully responsive design with manifest and service worker support—install it on your mobile home screen for a native app feel.
 -   **Swift Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile or via secure manual entry.
+-   **Remote Configuration**: Share or deploy pre-configured instances by passing all settings and name mappings via URL parameters.
 -   **Screen Wake Lock**: Keep your device screen active while tracking to avoid interruptions.
 -   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 
+> [!CAUTION]
+> ### Security Warning
+> Using URL parameters to configure the app (especially the `key` parameter) will put your API key in the browser history.
+> **Avoid using this on public or shared computers.**
+> The app attempts to "clean" the URL from the address bar immediately after ingestion, but it may still remain in the browser's history log.
+
 ## URL Parameters
 
-Automate the tracking view by passing parameters in the URL:
+Control the app or perform one-time setup via URL parameters:
+
+### Configuration (One-Time Setup)
+These parameters will be stored in the browser's local storage and the URL will be cleaned immediately.
+
+-   **`server`**: Dawarich Base URL (e.g., `https://dawarich.example.com`).
+-   **`key`**: Your Dawarich API Key.
+-   **`name`**: Your display name as the owner.
+-   **`geocode`**: Enable reverse geocoding (`true`/`false`).
+-   **`photon`**: Custom Photon API URL.
+-   **`awake`**: Enable Screen Wake Lock (`true`/`false`).
+-   **`names`**: Email-to-name mappings. Format: `email:name;email:name` (e.g., `user1@me.com:John;user2@me.com:Jane`).
+-   **`config`**: A Base64-encoded JSON string containing multiple settings. You can generate this using the **"Copy Shareable Config URL"** button in the app settings.
+
+### Dynamic View Parameters
+These control the current session and are not permanently stored.
 
 -   **`emails=...`**: Pre-select family members to track on the map.
     -   `?emails=all`: Selects all family members.
     -   `?emails=user1@example.com,user2@example.com`: Selects specific members by email.
 -   **`show_owner=true`**: Automatically includes your own location (API owner) on the map alongside selected members.
 
-*Example*: `https://your-locator.com/?emails=all&show_owner=true`
+*Example Individual Setup*: `https://your-locator.com/?server=https://dawarich.io&key=secret_123&name=Holger`
+*Example Bulk Setup*: `https://your-locator.com/?config=eyJjb25maW...`
 
 ## How it Works
 

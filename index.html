@@ -18,11 +18,11 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="icon" type="image/png" href="./icon.png?v=2.3.2">
-    <link rel="stylesheet" href="./style.css?v=2.3.2">
-    <link rel="manifest" href="./manifest.json?v=2.3.2">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.4.0">
+    <link rel="stylesheet" href="./style.css?v=2.4.0">
+    <link rel="manifest" href="./manifest.json?v=2.4.0">
     <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.3.2">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.4.0">
 </head>
 
 <body>
@@ -72,12 +72,23 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
                 <button id="saveConfig" style="flex: 1;">Start Tracking</button>
                 <button id="scanQrBtn"
                     style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--accent-color);">Scan
                     QR Code</button>
             </div>
+
+            <div
+                style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <button id="shareConfigBtn"
+                    style="width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem;">Copy
+                    Shareable Config URL</button>
+                <span id="shareStatus"
+                    style="font-size: 0.75rem; color: #2AAD27; height: 1rem; opacity: 0; transition: opacity 0.3s;">Copied
+                    to clipboard!</span>
+            </div>
+
             <div id="qrReaderContainer"
                 style="display: none; margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
                 <div id="qrReader" style="width: 100%;"></div>
@@ -131,9 +142,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.3.2</a>
+        class="version-tag">v2.4.0</a>
 
-    <script src="./app.js?v=2.3.2"></script>
+    <script src="./app.js?v=2.4.0"></script>
 </body>
 
 </html>
