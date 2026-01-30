@@ -744,8 +744,7 @@ input:checked+.slider:before {
     }
 
     .member-email-addr {
-        flex: 1 10000 auto;
-        min-width: 0;
+        display: inline;
     }
 
     .edit-name-btn {
