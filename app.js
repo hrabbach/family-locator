@@ -678,21 +678,24 @@ function updateUI(data) {
         const lat = parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5);
         const lon = parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5);
         const isOwnerSelected = selectedMemberEmails.has('OWNER');
+        const isStationaryMode = config.fixedLat && config.fixedLon;
 
         // Distance logic (Only in Stationary Mode)
         let ownerDistanceHtml = '';
-        if (config.fixedLat && config.fixedLon && userLocation) {
+        if (isStationaryMode && userLocation) {
              const dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
              ownerDistanceHtml = `<div class="member-distance">${dist.toFixed(2)} km away</div>`;
         }
 
+        // Checkbox only in Stationary Mode
+        const checkboxHtml = isStationaryMode ?
+            `<input type="checkbox" class="member-checkbox" ${isOwnerSelected ? 'checked' : ''} data-action="toggle-selection" data-email="OWNER">`
+            : `<!-- Checkbox hidden in normal mode -->`;
+
         const ownerCard = `
             <div class="member-card owner-card">
                  <div class="member-checkbox-container">
-                    <input type="checkbox" class="member-checkbox"
-                        ${isOwnerSelected ? 'checked' : ''}
-                        data-action="toggle-selection" data-email="OWNER"
-                    >
+                    ${checkboxHtml}
                 </div>
                 <div class="avatar" style="background: #ffd700; color: #333;">${escapeHtml(ownerName.charAt(0).toUpperCase())}</div>
                 <div class="member-info">
