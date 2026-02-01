@@ -1,0 +1,10 @@
+127.0.0.1 - - [01/Feb/2026 16:52:12] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /style.css?v=2.5.1 HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /app.js?v=2.5.1 HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /sw.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/ HTTP/1.1" 404 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/index.html HTTP/1.1" 404 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/style.css?v=2.5.1 HTTP/1.1" 404 -
