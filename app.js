@@ -692,6 +692,11 @@ function updateUI(data) {
             `<input type="checkbox" class="member-checkbox" ${isOwnerSelected ? 'checked' : ''} data-action="toggle-selection" data-email="OWNER">`
             : `<!-- Checkbox hidden in normal mode -->`;
 
+        // Clickable name only in Stationary Mode
+        const nameHtml = isStationaryMode ?
+            `<span class="member-display-name" data-action="show-single-map" data-email="OWNER" style="color: #ffd700; cursor: pointer; text-decoration: underline;">${escapeHtml(ownerName)}</span>`
+            : `<span class="member-display-name" style="color: #ffd700;">${escapeHtml(ownerName)}</span>`;
+
         const ownerCard = `
             <div class="member-card owner-card">
                  <div class="member-checkbox-container">
@@ -700,7 +705,7 @@ function updateUI(data) {
                 <div class="avatar" style="background: #ffd700; color: #333;">${escapeHtml(ownerName.charAt(0).toUpperCase())}</div>
                 <div class="member-info">
                     <div class="member-email">
-                        <span class="member-display-name" data-action="show-single-map" data-email="OWNER" style="color: #ffd700; cursor: pointer; text-decoration: underline;">${escapeHtml(ownerName)}</span>
+                        ${nameHtml}
                          <span class="member-email-addr">(Owner)</span>
                          <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
                     </div>
