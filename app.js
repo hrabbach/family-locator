@@ -1468,7 +1468,13 @@ function setupEventListeners() {
         // Hide recenter button on toggle because we auto-center
         const btn = document.getElementById('dynamicRecenterBtn');
         if (btn) btn.style.display = 'none';
-        if (proximityEnabled) startUserTracking(); else stopUserTracking();
+
+        // Ensure startUserTracking is called, which handles Stationary Mode logic automatically
+        if (proximityEnabled) {
+            startUserTracking();
+        } else {
+            stopUserTracking();
+        }
         updateMapMarkers();
     });
 }
