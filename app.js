@@ -354,15 +354,21 @@ async function copyConfigUrl() {
 function init() {
     registerServiceWorker();
     setupEventListeners();
-    processUrlConfiguration();
 
     // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const emailsParam = urlParams.get('emails');
     const showOwnerParam = urlParams.get('show_owner');
+    const collapsedParam = urlParams.get('collapsed');
+
+    processUrlConfiguration();
 
     if (showOwnerParam === 'true') {
         showOwnerLocation = true;
+    }
+
+    if (collapsedParam === 'true') {
+        isMapOverlayCollapsed = true;
     }
 
     if (emailsParam) {

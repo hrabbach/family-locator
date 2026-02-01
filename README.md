@@ -55,6 +55,7 @@ These control the current session and are not permanently stored.
     -   `?emails=all`: Selects all family members.
     -   `?emails=user1@example.com,user2@example.com`: Selects specific members by email.
 -   **`show_owner=true`**: Automatically includes your own location (API owner) on the map alongside selected members.
+-   **`collapsed=true`**: Starts the map with the member overlay collapsed.
 
 *Example Individual Setup*: `https://your-locator.com/?server=https://dawarich.io&key=secret_123&name=Holger`
 *Example Bulk Setup*: `https://your-locator.com/?config=eyJjb25maW...`
