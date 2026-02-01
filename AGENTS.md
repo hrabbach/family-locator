@@ -50,6 +50,7 @@ The tool uses the following endpoint:
 - **Reverse Geocoding**: Optional address lookup via Photon API for all locations (cached locally for performance).
 
 ### Version History
+- **v2.5.0**: Added Stationary Device Mode for fixed location tracking, with support for Owner map tracking and distance display.
 - **v2.4.2**: Optimized map marker updates to fix O(N*M) performance bottleneck.
 - **v2.4.1**: Hidden coordinates on desktop when address is available and improved address persistence during updates.
 - **v2.4.0**: Added Remote Configuration via URL parameters and a "Share Configuration" feature.
@@ -64,6 +65,6 @@ The tool uses the following endpoint:
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v2.4.2
+### Current Version: v2.5.0
 
 

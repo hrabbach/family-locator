@@ -22,6 +22,7 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 -   **Remote Configuration**: Share or deploy pre-configured instances by passing all settings and name mappings via URL parameters.
 -   **Screen Wake Lock**: Keep your device screen active while tracking to avoid interruptions.
 -   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
+-   **Stationary Mode**: Configure a fixed location for wall-mounted displays to see distances to the owner and track them on the map.
 
 > [!CAUTION]
 > ### Security Warning
@@ -42,6 +43,8 @@ These parameters will be stored in the browser's local storage and the URL will 
 -   **`geocode`**: Enable reverse geocoding (`true`/`false`).
 -   **`photon`**: Custom Photon API URL.
 -   **`awake`**: Enable Screen Wake Lock (`true`/`false`).
+-   **`lat`**: Fixed latitude for Stationary Mode.
+-   **`lon`**: Fixed longitude for Stationary Mode.
 -   **`names`**: Email-to-name mappings. Format: `email:name;email:name` (e.g., `user1@me.com:John;user2@me.com:Jane`).
 -   **`config`**: A Base64-encoded JSON string containing multiple settings. You can generate this using the **"Copy Shareable Config URL"** button in the app settings.
 
@@ -71,6 +74,22 @@ To enable address lookup for your family members:
 5.  Click **"Start Tracking"** to save your changes.
 
 *Note: Addresses are cached locally to ensure high performance and minimize API usage.*
+
+## Stationary Device Mode
+
+Ideal for wall-mounted displays (e.g., ViewAssist connected to HomeAssistant) or desktop usage where the device does not move.
+
+-   **Fixed Location**: Manually configure the latitude and longitude of the display device. This bypasses browser geolocation, ensuring privacy and battery savings.
+-   **Owner Distance**: In this mode, the dashboard displays the distance from the stationary device to the API Owner's last known location.
+-   **Owner Tracking**: The Owner can be selected for tracking on the map just like other family members.
+
+To set up:
+1.  Go to **Settings**.
+2.  Check **"Stationary Device Mode"**.
+3.  Enter the **Fixed Latitude** and **Fixed Longitude**.
+4.  Click **"Start Tracking"**.
+
+Alternatively, configure via URL: `?lat=51.505&lon=-0.09`
 
 ## Installation
 

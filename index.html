@@ -18,11 +18,11 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="icon" type="image/png" href="./icon.png?v=2.4.2">
-    <link rel="stylesheet" href="./style.css?v=2.4.2">
-    <link rel="manifest" href="./manifest.json?v=2.4.2">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.5.0">
+    <link rel="stylesheet" href="./style.css?v=2.5.0">
+    <link rel="manifest" href="./manifest.json?v=2.5.0">
     <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.4.2">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.5.0">
 </head>
 
 <body>
@@ -69,6 +69,24 @@
                     <input type="checkbox" id="keepAwakeEnabled" class="member-checkbox">
                     <label for="keepAwakeEnabled"
                         style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Keep Screen Awake</label>
+                </div>
+
+                <div class="form-group"
+                    style="margin-top: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="stationaryEnabled" class="member-checkbox">
+                    <label for="stationaryEnabled"
+                        style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Stationary Device Mode</label>
+                </div>
+                <div id="stationarySettings"
+                    style="display: none; padding-left: 0.5rem; border-left: 2px solid var(--border-color); margin-left: 0.5rem;">
+                    <div class="form-group">
+                        <label for="fixedLat">Fixed Latitude</label>
+                        <input type="number" id="fixedLat" step="any" placeholder="e.g., 51.505">
+                    </div>
+                    <div class="form-group">
+                        <label for="fixedLon">Fixed Longitude</label>
+                        <input type="number" id="fixedLon" step="any" placeholder="e.g., -0.09">
+                    </div>
                 </div>
             </div>
 
@@ -142,9 +160,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.4.2</a>
+        class="version-tag">v2.5.0</a>
 
-    <script src="./app.js?v=2.4.2"></script>
+    <script src="./app.js?v=2.5.0"></script>
 </body>
 
 </html>
