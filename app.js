@@ -1245,7 +1245,7 @@ function recenterMap() {
 }
 
 function closeMap() {
-    stopUserTracking();
+    startUserTracking();
     isMapOverlayCollapsed = false; // Reset for next use
     elements.mapView.classList.remove('active');
     elements.dashboardView.classList.add('active');
