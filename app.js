@@ -815,9 +815,15 @@ function updateMapMarkers() {
         }
     }
 
+    // Create a map for fast lookup to avoid O(N*M) complexity
+    const locationsMap = new Map();
+    for (const m of lastLocations) {
+        locationsMap.set(m.email, m);
+    }
+
     // Add or update markers for selected members
     for (const email of selectedMemberEmails) {
-        const member = lastLocations.find(m => m.email === email);
+        const member = locationsMap.get(email);
         if (member) {
             const lat = member.latitude;
             const lng = member.longitude;
@@ -929,7 +935,7 @@ function updateMapMarkers() {
 
     // Selected Members
     selectedMemberEmails.forEach(email => {
-        const member = lastLocations.find(m => m.email === email);
+        const member = locationsMap.get(email);
         if (member) {
             usersToShow.push({
                 name: names[email] || email,
@@ -1091,7 +1097,7 @@ function updateMapMarkers() {
 
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
     if (selectedMemberEmails.size === 1) {
-        const member = lastLocations.find(m => m.email === Array.from(selectedMemberEmails)[0]);
+        const member = locationsMap.get(Array.from(selectedMemberEmails)[0]);
         if (member) updateProximityUI(member.latitude, member.longitude);
     } else {
         elements.distanceBadge.style.display = 'none';
