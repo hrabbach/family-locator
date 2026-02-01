@@ -70,6 +70,24 @@
                     <label for="keepAwakeEnabled"
                         style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Keep Screen Awake</label>
                 </div>
+
+                <div class="form-group"
+                    style="margin-top: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="stationaryEnabled" class="member-checkbox">
+                    <label for="stationaryEnabled"
+                        style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Stationary Device Mode</label>
+                </div>
+                <div id="stationarySettings"
+                    style="display: none; padding-left: 0.5rem; border-left: 2px solid var(--border-color); margin-left: 0.5rem;">
+                    <div class="form-group">
+                        <label for="fixedLat">Fixed Latitude</label>
+                        <input type="number" id="fixedLat" step="any" placeholder="e.g., 51.505">
+                    </div>
+                    <div class="form-group">
+                        <label for="fixedLon">Fixed Longitude</label>
+                        <input type="number" id="fixedLon" step="any" placeholder="e.g., -0.09">
+                    </div>
+                </div>
             </div>
 
             <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">

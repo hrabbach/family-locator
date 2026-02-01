@@ -209,17 +209,6 @@ button:active {
     /* Prevent squishing */
 }
 
-/* Owner Card Specifics for Alignment */
-.owner-card .member-checkbox-container {
-    visibility: visible;
-    /* Must be visible to take up space, but content hidden */
-}
-
-/* Hide the pseudo-element or any content instead of visibility:hidden on container */
-.owner-card .member-checkbox-container * {
-    display: none;
-}
-
 /* Custom Checkbox Styling */
 .member-info {
     flex: 1;

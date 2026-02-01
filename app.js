@@ -21,6 +21,10 @@ const elements = {
     photonUrl: document.getElementById('photonUrl'),
     photonApiKey: document.getElementById('photonApiKey'),
     keepAwakeEnabled: document.getElementById('keepAwakeEnabled'),
+    stationaryEnabled: document.getElementById('stationaryEnabled'),
+    stationarySettings: document.getElementById('stationarySettings'),
+    fixedLat: document.getElementById('fixedLat'),
+    fixedLon: document.getElementById('fixedLon'),
 
     // Buttons
     saveBtn: document.getElementById('saveConfig'),
@@ -267,9 +271,11 @@ function processUrlConfiguration() {
     const photon = urlParams.get('photon');
     const photonKey = urlParams.get('photonKey');
     const awake = urlParams.get('awake');
+    const lat = urlParams.get('lat');
+    const lon = urlParams.get('lon');
     const namesParam = urlParams.get('names'); // email:name;email:name
 
-    if (server || key || name || geocode || photon || photonKey || awake) {
+    if (server || key || name || geocode || photon || photonKey || awake || lat || lon) {
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
         if (server) config.baseUrl = server.replace(/\/$/, "");
         if (key) config.apiKey = key;
@@ -278,6 +284,8 @@ function processUrlConfiguration() {
         if (photon) config.photonUrl = photon.replace(/\/$/, "");
         if (photonKey) config.photonApiKey = photonKey;
         if (awake) config.keepAwakeEnabled = awake === 'true';
+        if (lat) config.fixedLat = lat;
+        if (lon) config.fixedLon = lon;
 
         localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
         updated = true;
@@ -400,6 +408,19 @@ function showConfig() {
     elements.geocodeSettings.style.display = elements.geocodeEnabled.checked ? 'block' : 'none';
     elements.keepAwakeEnabled.checked = config.keepAwakeEnabled || false;
 
+    // Stationary Mode
+    if (config.fixedLat && config.fixedLon) {
+        elements.stationaryEnabled.checked = true;
+        elements.fixedLat.value = config.fixedLat;
+        elements.fixedLon.value = config.fixedLon;
+        elements.stationarySettings.style.display = 'block';
+    } else {
+        elements.stationaryEnabled.checked = false;
+        elements.fixedLat.value = '';
+        elements.fixedLon.value = '';
+        elements.stationarySettings.style.display = 'none';
+    }
+
     elements.configView.classList.add('active');
     elements.dashboardView.classList.remove('active');
     stopTracking();
@@ -441,6 +462,10 @@ function saveConfig() {
     const photonApiKey = elements.photonApiKey.value.trim();
     const keepAwakeEnabled = elements.keepAwakeEnabled.checked;
 
+    const stationaryEnabled = elements.stationaryEnabled.checked;
+    const fixedLat = elements.fixedLat.value.trim();
+    const fixedLon = elements.fixedLon.value.trim();
+
     if (!baseUrl || !apiKey) {
         alert("Please fill in both fields");
         return;
@@ -455,6 +480,11 @@ function saveConfig() {
         photonApiKey,
         keepAwakeEnabled
     };
+
+    if (stationaryEnabled && fixedLat && fixedLon) {
+        config.fixedLat = fixedLat;
+        config.fixedLon = fixedLon;
+    }
 
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     showDashboard();
@@ -647,22 +677,34 @@ function updateUI(data) {
         const batteryClass = getBatteryClass(batt);
         const lat = parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5);
         const lon = parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5);
+        const isOwnerSelected = selectedMemberEmails.has('OWNER');
+
+        // Distance logic (Only in Stationary Mode)
+        let ownerDistanceHtml = '';
+        if (config.fixedLat && config.fixedLon && userLocation) {
+             const dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
+             ownerDistanceHtml = `<div class="member-distance">${dist.toFixed(2)} km away</div>`;
+        }
 
         const ownerCard = `
             <div class="member-card owner-card">
                  <div class="member-checkbox-container">
-                    <!-- Placeholder to align with list -->
+                    <input type="checkbox" class="member-checkbox"
+                        ${isOwnerSelected ? 'checked' : ''}
+                        data-action="toggle-selection" data-email="OWNER"
+                    >
                 </div>
                 <div class="avatar" style="background: #ffd700; color: #333;">${escapeHtml(ownerName.charAt(0).toUpperCase())}</div>
                 <div class="member-info">
                     <div class="member-email">
-                        <span class="member-display-name" style="color: #ffd700;">${escapeHtml(ownerName)}</span>
+                        <span class="member-display-name" data-action="show-single-map" data-email="OWNER" style="color: #ffd700; cursor: pointer; text-decoration: underline;">${escapeHtml(ownerName)}</span>
                          <span class="member-email-addr">(Owner)</span>
                          <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
                     </div>
                     <div class="member-location ${ownerLocation.address ? 'has-address' : ''}">
                         <span class="member-coords">Lat: ${lat}, Lon: ${lon}</span>
                         ${ownerLocation.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(ownerLocation.address)}</div>` : ''}
+                        ${ownerDistanceHtml}
                     </div>
                 </div>
                 <div class="member-meta">
@@ -864,7 +906,9 @@ function updateMapMarkers() {
     }
 
     // Owner Marker
-    if (showOwnerLocation && ownerLocation) {
+    const shouldShowOwner = (showOwnerLocation || selectedMemberEmails.has('OWNER')) && ownerLocation;
+
+    if (shouldShowOwner) {
         const lat = ownerLocation.latitude || ownerLocation.lat;
         const lng = ownerLocation.longitude || ownerLocation.lon;
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
@@ -901,7 +945,7 @@ function updateMapMarkers() {
             bounds.extend([lat, lng]);
             hasMarkers = true;
         }
-    } else if (ownerMarker && !showOwnerLocation) {
+    } else if (ownerMarker) {
         map.removeLayer(ownerMarker);
         ownerMarker = null;
     }
@@ -928,7 +972,7 @@ function updateMapMarkers() {
     const usersToShow = [];
 
     // Owner (if enabled)
-    if (showOwnerLocation && ownerLocation) {
+    if (shouldShowOwner) {
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
         usersToShow.push({
             name: config.apiUserName || "API Owner",
@@ -1117,6 +1161,33 @@ function updateMapMarkers() {
 let locationTimeout = null;
 
 function startUserTracking() {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+
+    // 1. Stationary Mode Priority
+    if (config && config.fixedLat && config.fixedLon) {
+        const lat = parseFloat(config.fixedLat);
+        const lng = parseFloat(config.fixedLon);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            // Stop any existing browser tracking
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (locationTimeout) clearTimeout(locationTimeout);
+
+            userLocation = { lat, lng };
+            updateUserMarker();
+
+            if (elements.dashboardView.classList.contains('active')) {
+                updateUI({ locations: lastLocations });
+            }
+            if (elements.mapView.classList.contains('active')) {
+                updateMapMarkers();
+            }
+            return; // Exit, do not use browser geolocation
+        }
+    }
+
     // If showOwnerLocation is true, we don't track user at all (interface hidden)
     if (showOwnerLocation) return;
 
@@ -1336,6 +1407,11 @@ function setupEventListeners() {
     // Geocode Toggle
     elements.geocodeEnabled.addEventListener('change', (e) => {
         elements.geocodeSettings.style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    // Stationary Toggle
+    elements.stationaryEnabled.addEventListener('change', (e) => {
+        elements.stationarySettings.style.display = e.target.checked ? 'block' : 'none';
     });
 
     // Global Event Delegation for Dynamic Elements
