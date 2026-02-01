@@ -1,60 +1,10 @@
-127.0.0.1 - - [01/Feb/2026 16:34:53] "GET /?server=http://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:34:54] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:34:54] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:34:54] "GET /familytrack/index.html HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /index.html?server=http://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:35:31] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:35:31] "GET /familytrack/index.html HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:35:59] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:59] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:35:59] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:00] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:00] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:00] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:36:00] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:00] "GET /familytrack/index.html HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:36:00] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:00] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /familytrack/index.html HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:36:51] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:36:51] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /familytrack/index.html HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:37:36] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:37:36] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /app.js?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /style.css?v=2.5.0 HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /sw.js HTTP/1.1" 200 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /familytrack/ HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /familytrack/style.css?v=2.5.0 HTTP/1.1" 404 -
-127.0.0.1 - - [01/Feb/2026 16:38:16] code 404, message File not found
-127.0.0.1 - - [01/Feb/2026 16:38:16] "GET /familytrack/index.html HTTP/1.1" 404 -
+127.0.0.1 - - [01/Feb/2026 16:52:12] "GET /index.html?server=https://mock-api.com&key=test&emails=user1@example.com,user2@example.com&collapsed=true HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /style.css?v=2.5.1 HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /app.js?v=2.5.1 HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /sw.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/ HTTP/1.1" 404 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/index.html HTTP/1.1" 404 -
+127.0.0.1 - - [01/Feb/2026 16:52:13] code 404, message File not found
+127.0.0.1 - - [01/Feb/2026 16:52:13] "GET /familytrack/style.css?v=2.5.1 HTTP/1.1" 404 -
