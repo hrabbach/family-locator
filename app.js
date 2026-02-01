@@ -226,10 +226,15 @@ async function fetchAddressFromApi(lat, lon, config) {
     }
 }
 
+function getMemberColorByIndex(index) {
+    if (index < 0) return MEMBER_COLORS[0];
+    return MEMBER_COLORS[index % MEMBER_COLORS.length];
+}
+
 function getMemberColor(email, locations) {
     if (!email || !locations) return MEMBER_COLORS[0];
     const index = locations.findIndex(m => m.email === email);
-    return index >= 0 ? MEMBER_COLORS[index % MEMBER_COLORS.length] : MEMBER_COLORS[0];
+    return getMemberColorByIndex(index);
 }
 
 function processUrlConfiguration() {
@@ -672,7 +677,7 @@ function updateUI(data) {
         htmlContent += ownerCard;
     }
 
-    htmlContent += data.locations.map(member => {
+    htmlContent += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
         const displayName = names[member.email] || member.email;
@@ -694,7 +699,7 @@ function updateUI(data) {
                         data-action="toggle-selection" data-email="${escapeHtml(member.email)}"
                     >
                 </div>
-                <div class="avatar" style="background: ${getMemberColor(member.email, data.locations).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
+                <div class="avatar" style="background: ${getMemberColorByIndex(index).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
                 <div class="member-info">
                     <div class="member-email">
                         <span class="member-display-name" data-action="show-single-map" data-email="${escapeHtml(member.email)}" style="cursor: pointer; text-decoration: underline;">${escapeHtml(displayName)}</span>
@@ -817,14 +822,16 @@ function updateMapMarkers() {
 
     // Create a map for fast lookup to avoid O(N*M) complexity
     const locationsMap = new Map();
-    for (const m of lastLocations) {
-        locationsMap.set(m.email, m);
-    }
+    lastLocations.forEach((m, index) => {
+        locationsMap.set(m.email, { member: m, index });
+    });
 
     // Add or update markers for selected members
     for (const email of selectedMemberEmails) {
-        const member = locationsMap.get(email);
-        if (member) {
+        const entry = locationsMap.get(email);
+        if (entry) {
+            const member = entry.member;
+            const index = entry.index;
             const lat = member.latitude;
             const lng = member.longitude;
             const displayName = names[email] || email;
@@ -836,7 +843,7 @@ function updateMapMarkers() {
                 // It does: setTooltipContent
                 memberMarkers[email].setTooltipContent(escapeHtml(displayName));
             } else {
-                const colorCfg = getMemberColor(email, lastLocations);
+                const colorCfg = getMemberColorByIndex(index);
                 const customIcon = new L.Icon({
                     iconUrl: colorCfg.icon,
                     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -935,8 +942,10 @@ function updateMapMarkers() {
 
     // Selected Members
     selectedMemberEmails.forEach(email => {
-        const member = locationsMap.get(email);
-        if (member) {
+        const entry = locationsMap.get(email);
+        if (entry) {
+            const member = entry.member;
+            const index = entry.index;
             usersToShow.push({
                 name: names[email] || email,
                 email: email,
@@ -944,7 +953,7 @@ function updateMapMarkers() {
                 battery: member.battery,
                 isOwner: false,
                 initial: member.email_initial,
-                color: getMemberColor(email, lastLocations).hex
+                color: getMemberColorByIndex(index).hex
             });
         }
     });
@@ -1097,8 +1106,8 @@ function updateMapMarkers() {
 
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
     if (selectedMemberEmails.size === 1) {
-        const member = locationsMap.get(Array.from(selectedMemberEmails)[0]);
-        if (member) updateProximityUI(member.latitude, member.longitude);
+        const entry = locationsMap.get(Array.from(selectedMemberEmails)[0]);
+        if (entry) updateProximityUI(entry.member.latitude, entry.member.longitude);
     } else {
         elements.distanceBadge.style.display = 'none';
     }
