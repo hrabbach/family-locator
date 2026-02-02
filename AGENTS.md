@@ -50,6 +50,7 @@ The tool uses the following endpoint:
 - **Reverse Geocoding**: Optional address lookup via Photon API for all locations (cached locally for performance).
 
 ### Version History
+- **v2.5.2**: Fixed owner edit button alignment and removed redundant "(Owner)" label from dashboard.
 - **v2.5.1**: Added 'collapsed' URL parameter and fixed dynamic parameter parsing order.
 - **v2.5.0**: Added Stationary Device Mode for fixed location tracking, with support for Owner map tracking and distance display.
 - **v2.4.2**: Optimized map marker updates to fix O(N*M) performance bottleneck.
@@ -66,6 +67,6 @@ The tool uses the following endpoint:
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 
-### Current Version: v2.5.1
+### Current Version: v2.5.2
 
 
