@@ -841,11 +841,14 @@ function showMap(email) {
 
 function updateMapMarkers() {
     if (!map) {
-        map = L.map('mapContainer').setView([0, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        map = new maplibregl.Map({
+            container: 'mapContainer',
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [0, 0],
+            zoom: 1,
+            attributionControl: true
+        });
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
         map.on('dragstart', () => {
             isAutoCenterEnabled = false;
@@ -862,7 +865,7 @@ function updateMapMarkers() {
 
     }
 
-    const bounds = L.latLngBounds();
+    const bounds = new maplibregl.LngLatBounds();
     let hasMarkers = false;
 
     // 1. Members
@@ -871,7 +874,7 @@ function updateMapMarkers() {
     // Remove old markers that are no longer selected or valid
     for (const [email, m] of Object.entries(memberMarkers)) {
         if (!selectedMemberEmails.has(email)) {
-            map.removeLayer(m);
+            m.remove();
             delete memberMarkers[email];
         }
     }
@@ -894,27 +897,38 @@ function updateMapMarkers() {
             const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtml(member.address)}` : ''}`;
 
             if (memberMarkers[email]) {
-                memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
-                // Update tooltip if exists, or rebind? Leaflet doesn't have setTooltipContent handy on marker if not opened? 
-                // It does: setTooltipContent
-                memberMarkers[email].setTooltipContent(escapeHtml(displayName));
+                memberMarkers[email].setLngLat([lng, lat]);
+                memberMarkers[email].getPopup().setHTML(popupContent);
+                // Update label text
+                const el = memberMarkers[email].getElement();
+                const label = el.querySelector('.marker-label-container');
+                if (label) label.innerText = displayName;
             } else {
                 const colorCfg = getMemberColorByIndex(index);
-                const customIcon = new L.Icon({
-                    iconUrl: colorCfg.icon,
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                });
 
-                memberMarkers[email] = L.marker([lat, lng], { icon: customIcon })
-                    .addTo(map)
-                    .bindPopup(popupContent)
-                    .bindTooltip(escapeHtml(displayName), { permanent: true, direction: 'bottom', className: 'marker-label' });
+                const container = document.createElement('div');
+                container.className = 'custom-marker-container';
+
+                const img = document.createElement('img');
+                img.src = colorCfg.icon;
+                img.style.width = '25px';
+                img.style.height = '41px';
+
+                const label = document.createElement('div');
+                label.className = 'marker-label-container';
+                label.innerText = displayName;
+
+                container.appendChild(img);
+                container.appendChild(label);
+
+                const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+
+                memberMarkers[email] = new maplibregl.Marker({ element: container, anchor: 'bottom' })
+                    .setLngLat([lng, lat])
+                    .setPopup(popup)
+                    .addTo(map);
             }
-            bounds.extend([lat, lng]);
+            bounds.extend([lng, lat]);
             hasMarkers = true;
         }
     }
@@ -926,7 +940,6 @@ function updateMapMarkers() {
         const lat = ownerLocation.latitude || ownerLocation.lat;
         const lng = ownerLocation.longitude || ownerLocation.lon;
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
-        // Ensure we use the config name, fallback to "API Owner"
         const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
         const timestamp = ownerLocation.timestamp || ownerLocation.tst;
         const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown time';
@@ -936,31 +949,39 @@ function updateMapMarkers() {
             const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%${ownerLocation.address ? `<br>${escapeHtml(ownerLocation.address)}` : ''}`;
 
             if (!ownerMarker) {
-                const goldIcon = new L.Icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                });
+                const container = document.createElement('div');
+                container.className = 'custom-marker-container';
 
-                ownerMarker = L.marker([lat, lng], { icon: goldIcon })
-                    .addTo(map)
-                    .bindPopup(popupContent)
-                    .bindTooltip(escapeHtml(ownerName), { permanent: true, direction: 'bottom', className: 'marker-label' });
+                const img = document.createElement('img');
+                img.src = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png';
+                img.style.width = '25px';
+                img.style.height = '41px';
+
+                const label = document.createElement('div');
+                label.className = 'marker-label-container';
+                label.innerText = ownerName;
+
+                container.appendChild(img);
+                container.appendChild(label);
+
+                const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+
+                ownerMarker = new maplibregl.Marker({ element: container, anchor: 'bottom' })
+                    .setLngLat([lng, lat])
+                    .setPopup(popup)
+                    .addTo(map);
             } else {
-                ownerMarker.setLatLng([lat, lng]).setPopupContent(popupContent);
-                ownerMarker.setTooltipContent(escapeHtml(ownerName));
-                if (ownerMarker.getPopup().isOpen()) {
-                    ownerMarker.openPopup(); // Refresh content if open
-                }
+                ownerMarker.setLngLat([lng, lat]);
+                ownerMarker.getPopup().setHTML(popupContent);
+                const el = ownerMarker.getElement();
+                const label = el.querySelector('.marker-label-container');
+                if (label) label.innerText = ownerName;
             }
-            bounds.extend([lat, lng]);
+            bounds.extend([lng, lat]);
             hasMarkers = true;
         }
     } else if (ownerMarker) {
-        map.removeLayer(ownerMarker);
+        ownerMarker.remove();
         ownerMarker = null;
     }
 
@@ -969,10 +990,10 @@ function updateMapMarkers() {
         if (!userMarker) {
             updateUserMarker(); // This creates it
         } else {
-            userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+            userMarker.setLngLat([userLocation.lng, userLocation.lat]);
         }
-        bounds.extend([userLocation.lat, userLocation.lng]);
-        hasMarkers = true; // Count user as a marker for bounds? Maybe.
+        bounds.extend([userLocation.lng, userLocation.lat]);
+        hasMarkers = true;
     }
 
     // Unified Map Overlay
@@ -1150,15 +1171,18 @@ function updateMapMarkers() {
 
 
     if (isAutoCenterEnabled && hasMarkers) {
-        // Adjust padding based on overlay height assumption (Bottom overlay on mobile)
         const isMobile = window.innerWidth <= 600;
-        const padding = isMobile ? [20, 20] : [50, 50];
-        const bottomPadding = isMobile ? 300 : 50; // Extra room for the footer card
+        const paddingBottom = isMobile ? 300 : 50;
+        const paddingSide = isMobile ? 20 : 50;
 
         isProgrammaticUpdate = true;
         map.fitBounds(bounds, {
-            padding: padding,
-            paddingBottomRight: [0, bottomPadding],
+            padding: {
+                top: paddingSide,
+                bottom: paddingBottom,
+                left: paddingSide,
+                right: paddingSide
+            },
             maxZoom: 18
         });
         isProgrammaticUpdate = false;
@@ -1278,7 +1302,7 @@ function stopUserTracking() {
         watchId = null;
     }
     if (userMarker) {
-        map.removeLayer(userMarker);
+        userMarker.remove();
         userMarker = null;
     }
     userLocation = null;
@@ -1289,16 +1313,13 @@ function updateUserMarker() {
     if (!map || !userLocation || !proximityEnabled) return;
 
     if (!userMarker) {
-        userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
-            radius: 8,
-            fillColor: "#4a90e2",
-            color: "#fff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-        }).addTo(map);
+        const el = document.createElement('div');
+        el.className = 'user-location-dot';
+        userMarker = new maplibregl.Marker({ element: el })
+            .setLngLat([userLocation.lng, userLocation.lat])
+            .addTo(map);
     } else {
-        userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+        userMarker.setLngLat([userLocation.lng, userLocation.lat]);
     }
 }
 
