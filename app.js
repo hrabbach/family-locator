@@ -73,6 +73,7 @@ let proximityEnabled = false;
 let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
+let isProgrammaticUpdate = false;
 let isMapOverlayCollapsed = false;
 let lastKnownAddresses = {}; // email -> address
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
@@ -851,8 +852,8 @@ function updateMapMarkers() {
             const btn = document.getElementById('dynamicRecenterBtn');
             if (btn) btn.style.display = 'block';
         });
-        map.on('zoomstart', (e) => {
-            if (e.originalEvent) {
+        map.on('zoomstart', () => {
+            if (!isProgrammaticUpdate) {
                 isAutoCenterEnabled = false;
                 const btn = document.getElementById('dynamicRecenterBtn');
                 if (btn) btn.style.display = 'block';
@@ -1154,11 +1155,13 @@ function updateMapMarkers() {
         const padding = isMobile ? [20, 20] : [50, 50];
         const bottomPadding = isMobile ? 300 : 50; // Extra room for the footer card
 
+        isProgrammaticUpdate = true;
         map.fitBounds(bounds, {
             padding: padding,
             paddingBottomRight: [0, bottomPadding],
             maxZoom: 18
         });
+        isProgrammaticUpdate = false;
     }
 
     // updateProximityUI(lat, lng); // Requires single target, disable if multiple
