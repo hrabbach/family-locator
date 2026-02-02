@@ -16,6 +16,7 @@ const elements = {
     baseUrlInput: document.getElementById('baseUrl'),
     apiKeyInput: document.getElementById('apiKey'),
     apiUserNameInput: document.getElementById('apiUserName'),
+    mapStyleUrlInput: document.getElementById('mapStyleUrl'),
     geocodeEnabled: document.getElementById('geocodeEnabled'),
     geocodeSettings: document.getElementById('geocodeSettings'),
     photonUrl: document.getElementById('photonUrl'),
@@ -268,6 +269,7 @@ function processUrlConfiguration() {
     const server = urlParams.get('server');
     const key = urlParams.get('key');
     const name = urlParams.get('name');
+    const mapStyle = urlParams.get('style');
     const geocode = urlParams.get('geocode');
     const photon = urlParams.get('photon');
     const photonKey = urlParams.get('photonKey');
@@ -276,11 +278,12 @@ function processUrlConfiguration() {
     const lon = urlParams.get('lon');
     const namesParam = urlParams.get('names'); // email:name;email:name
 
-    if (server || key || name || geocode || photon || photonKey || awake || lat || lon) {
+    if (server || key || name || mapStyle || geocode || photon || photonKey || awake || lat || lon) {
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
         if (server) config.baseUrl = server.replace(/\/$/, "");
         if (key) config.apiKey = key;
         if (name) config.apiUserName = name;
+        if (mapStyle) config.mapStyleUrl = mapStyle;
         if (geocode) config.geocodeEnabled = geocode === 'true';
         if (photon) config.photonUrl = photon.replace(/\/$/, "");
         if (photonKey) config.photonApiKey = photonKey;
@@ -407,6 +410,7 @@ function showConfig() {
     elements.baseUrlInput.value = config.baseUrl || '';
     elements.apiKeyInput.value = config.apiKey || '';
     elements.apiUserNameInput.value = config.apiUserName || '';
+    elements.mapStyleUrlInput.value = config.mapStyleUrl || '';
 
     // Geocoding
     elements.geocodeEnabled.checked = config.geocodeEnabled || false;
@@ -463,6 +467,7 @@ function saveConfig() {
     const baseUrl = elements.baseUrlInput.value.trim().replace(/\/$/, "");
     const apiKey = elements.apiKeyInput.value.trim();
     const apiUserName = elements.apiUserNameInput.value.trim();
+    const mapStyleUrl = elements.mapStyleUrlInput.value.trim();
 
     const geocodeEnabled = elements.geocodeEnabled.checked;
     const photonUrl = elements.photonUrl.value.trim().replace(/\/$/, "");
@@ -482,6 +487,7 @@ function saveConfig() {
         baseUrl,
         apiKey,
         apiUserName,
+        mapStyleUrl,
         geocodeEnabled,
         photonUrl: photonUrl || 'https://photon.komoot.io', // Default if empty
         photonApiKey,
@@ -841,9 +847,12 @@ function showMap(email) {
 
 function updateMapMarkers() {
     if (!map) {
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        const styleUrl = config.mapStyleUrl || 'https://tiles.openfreemap.org/styles/liberty';
+
         map = new maplibregl.Map({
             container: 'mapContainer',
-            style: 'https://tiles.openfreemap.org/styles/liberty',
+            style: styleUrl,
             center: [0, 0],
             zoom: 1,
             attributionControl: true
