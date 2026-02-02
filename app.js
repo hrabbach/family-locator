@@ -712,7 +712,6 @@ function updateUI(data) {
                 <div class="member-info">
                     <div class="member-email">
                         ${nameHtml}
-                         <span class="member-email-addr">(Owner)</span>
                          <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
                     </div>
                     <div class="member-location ${ownerLocation.address ? 'has-address' : ''}">
