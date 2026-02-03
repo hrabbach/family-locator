@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://unpkg.com 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://raw.githubusercontent.com https://cdnjs.cloudflare.com; connect-src 'self' https:;">
+        content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://unpkg.com 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org https://raw.githubusercontent.com https://cdnjs.cloudflare.com; connect-src 'self' https:; worker-src 'self' blob:;">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -14,15 +14,19 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
         integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+"
         crossorigin="anonymous"></script>
+    <!-- Map Engines -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="icon" type="image/png" href="./icon.png?v=2.5.2">
-    <link rel="stylesheet" href="./style.css?v=2.5.2">
-    <link rel="manifest" href="./manifest.json?v=2.5.2">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'></script>
+
+    <link rel="icon" type="image/png" href="./icon.png?v=2.6.0">
+    <link rel="stylesheet" href="./style.css?v=2.6.0">
+    <link rel="manifest" href="./manifest.json?v=2.6.0">
     <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.5.2">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.6.0">
 </head>
 
 <body>
@@ -44,6 +48,20 @@
             <div class="form-group">
                 <label for="apiUserName">Your Name (Optional)</label>
                 <input type="text" id="apiUserName" placeholder="e.g., John">
+            </div>
+
+            <div class="form-group">
+                <label for="mapEngine">Map Engine</label>
+                <select id="mapEngine" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: #161b22; color: var(--text-primary);">
+                    <option value="maplibre">MapLibre GL JS (Vector - Default)</option>
+                    <option value="leaflet">Leaflet (Raster - Classic)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="mapStyleGroup">
+                <label for="mapStyleUrl">Map Style URL (Vector)</label>
+                <input type="url" id="mapStyleUrl" placeholder="Default: ./style.json">
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">Supports MapLibre JSON styles (e.g., Protomaps, MapTiler)</small>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 1.5rem 0; padding-top: 1rem;">
@@ -160,9 +178,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.5.2</a>
+        class="version-tag">v2.6.0</a>
 
-    <script src="./app.js?v=2.5.2"></script>
+    <script src="./app.js?v=2.6.0"></script>
 </body>
 
 </html>

@@ -23,6 +23,8 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 -   **Screen Wake Lock**: Keep your device screen active while tracking to avoid interruptions.
 -   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 -   **Stationary Mode**: Configure a fixed location for wall-mounted displays to see distances to the owner and track them on the map.
+-   **Dual Map Engines**: Choose between modern Vector maps (MapLibre GL JS) or classic Raster maps (Leaflet) based on your device performance and preference.
+-   **Custom Map Styles**: When using Vector mode, override the default OpenFreeMap style with any MapLibre-compatible JSON style URL (e.g., from Protomaps or MapTiler).
 
 > [!CAUTION]
 > ### Security Warning
@@ -45,6 +47,8 @@ These parameters will be stored in the browser's local storage and the URL will 
 -   **`awake`**: Enable Screen Wake Lock (`true`/`false`).
 -   **`lat`**: Fixed latitude for Stationary Mode.
 -   **`lon`**: Fixed longitude for Stationary Mode.
+-   **`engine`**: Map engine selection (`maplibre` or `leaflet`).
+-   **`style`**: Custom MapLibre Style JSON URL (only applies if `engine` is `maplibre`).
 -   **`names`**: Email-to-name mappings. Format: `email:name;email:name` (e.g., `user1@me.com:John;user2@me.com:Jane`).
 -   **`config`**: A Base64-encoded JSON string containing multiple settings. You can generate this using the **"Copy Shareable Config URL"** button in the app settings.
 
@@ -92,6 +96,16 @@ To set up:
 
 Alternatively, configure via URL: `?lat=51.505&lon=-0.09`
 
+## Map Configuration
+
+You can switch between two map engines in the **Settings** view:
+
+1.  **MapLibre GL JS (Vector - Default)**: Uses modern vector tiles.
+    -   *Default Style*: Loads `./style.json` (OpenFreeMap 'Liberty'). You can modify this file directly to change the default appearance.
+    -   *Custom Style*: Enter a URL to any MapLibre-compatible style JSON (e.g., from Protomaps, MapTiler, or a self-hosted style).
+2.  **Leaflet (Raster - Classic)**: Uses traditional OpenStreetMap raster tiles.
+    -   Best for older devices or low-bandwidth environments.
+
 ## Installation
 
 Family Locator is built with standard web technologies (HTML, CSS, JS) and can be hosted on any static web server.
@@ -102,4 +116,4 @@ Family Locator is built with standard web technologies (HTML, CSS, JS) and can b
 4.  (Optional) "Add to Home Screen" via your browser's menu to install as a PWA.
 
 ---
-*Maintained with built-in cache-busting, high-performance Leaflet mapping, and Service Worker support.*
+*Maintained with built-in cache-busting, dual map engine support (MapLibre/Leaflet), and Service Worker capability.*
