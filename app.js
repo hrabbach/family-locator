@@ -16,7 +16,9 @@ const elements = {
     baseUrlInput: document.getElementById('baseUrl'),
     apiKeyInput: document.getElementById('apiKey'),
     apiUserNameInput: document.getElementById('apiUserName'),
+    mapEngineInput: document.getElementById('mapEngine'),
     mapStyleUrlInput: document.getElementById('mapStyleUrl'),
+    mapStyleGroup: document.getElementById('mapStyleGroup'),
     geocodeEnabled: document.getElementById('geocodeEnabled'),
     geocodeSettings: document.getElementById('geocodeSettings'),
     photonUrl: document.getElementById('photonUrl'),
@@ -269,6 +271,7 @@ function processUrlConfiguration() {
     const server = urlParams.get('server');
     const key = urlParams.get('key');
     const name = urlParams.get('name');
+    const engine = urlParams.get('engine');
     const mapStyle = urlParams.get('style');
     const geocode = urlParams.get('geocode');
     const photon = urlParams.get('photon');
@@ -278,11 +281,12 @@ function processUrlConfiguration() {
     const lon = urlParams.get('lon');
     const namesParam = urlParams.get('names'); // email:name;email:name
 
-    if (server || key || name || mapStyle || geocode || photon || photonKey || awake || lat || lon) {
+    if (server || key || name || engine || mapStyle || geocode || photon || photonKey || awake || lat || lon) {
         const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
         if (server) config.baseUrl = server.replace(/\/$/, "");
         if (key) config.apiKey = key;
         if (name) config.apiUserName = name;
+        if (engine) config.mapEngine = engine;
         if (mapStyle) config.mapStyleUrl = mapStyle;
         if (geocode) config.geocodeEnabled = geocode === 'true';
         if (photon) config.photonUrl = photon.replace(/\/$/, "");
@@ -410,7 +414,11 @@ function showConfig() {
     elements.baseUrlInput.value = config.baseUrl || '';
     elements.apiKeyInput.value = config.apiKey || '';
     elements.apiUserNameInput.value = config.apiUserName || '';
+    elements.mapEngineInput.value = config.mapEngine || 'maplibre';
     elements.mapStyleUrlInput.value = config.mapStyleUrl || '';
+
+    // Visibility of Style Input
+    elements.mapStyleGroup.style.display = (elements.mapEngineInput.value === 'maplibre') ? 'block' : 'none';
 
     // Geocoding
     elements.geocodeEnabled.checked = config.geocodeEnabled || false;
@@ -467,6 +475,7 @@ function saveConfig() {
     const baseUrl = elements.baseUrlInput.value.trim().replace(/\/$/, "");
     const apiKey = elements.apiKeyInput.value.trim();
     const apiUserName = elements.apiUserNameInput.value.trim();
+    const mapEngine = elements.mapEngineInput.value;
     const mapStyleUrl = elements.mapStyleUrlInput.value.trim();
 
     const geocodeEnabled = elements.geocodeEnabled.checked;
@@ -487,6 +496,7 @@ function saveConfig() {
         baseUrl,
         apiKey,
         apiUserName,
+        mapEngine,
         mapStyleUrl,
         geocodeEnabled,
         photonUrl: photonUrl || 'https://photon.komoot.io', // Default if empty
@@ -846,35 +856,77 @@ function showMap(email) {
 }
 
 function updateMapMarkers() {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const useLeaflet = config.mapEngine === 'leaflet';
+
+    // If switching engines, destroy previous map instance if it doesn't match
+    if (map) {
+        const isLeafletInstance = !!map.removeLayer; // Duck typing check
+        if (useLeaflet !== isLeafletInstance) {
+            map.remove();
+            map = null;
+            memberMarkers = {};
+            ownerMarker = null;
+            userMarker = null;
+            document.getElementById('mapContainer').innerHTML = ''; // Ensure container is clean
+        }
+    }
+
     if (!map) {
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
-        const styleUrl = config.mapStyleUrl || 'https://tiles.openfreemap.org/styles/liberty';
+        if (useLeaflet) {
+            // --- LEAFLET INITIALIZATION ---
+            map = L.map('mapContainer').setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
-        map = new maplibregl.Map({
-            container: 'mapContainer',
-            style: styleUrl,
-            center: [0, 0],
-            zoom: 1,
-            attributionControl: true
-        });
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-        map.on('dragstart', () => {
-            isAutoCenterEnabled = false;
-            const btn = document.getElementById('dynamicRecenterBtn');
-            if (btn) btn.style.display = 'block';
-        });
-        map.on('zoomstart', () => {
-            if (!isProgrammaticUpdate) {
+            map.on('dragstart', () => {
                 isAutoCenterEnabled = false;
                 const btn = document.getElementById('dynamicRecenterBtn');
                 if (btn) btn.style.display = 'block';
-            }
-        });
+            });
+            map.on('zoomstart', () => {
+                if (!isProgrammaticUpdate) {
+                    isAutoCenterEnabled = false;
+                    const btn = document.getElementById('dynamicRecenterBtn');
+                    if (btn) btn.style.display = 'block';
+                }
+            });
+        } else {
+            // --- MAPLIBRE INITIALIZATION ---
+            const styleUrl = config.mapStyleUrl || 'https://tiles.openfreemap.org/styles/liberty';
+            map = new maplibregl.Map({
+                container: 'mapContainer',
+                style: styleUrl,
+                center: [0, 0],
+                zoom: 1,
+                attributionControl: true
+            });
+            map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
+            map.on('dragstart', () => {
+                isAutoCenterEnabled = false;
+                const btn = document.getElementById('dynamicRecenterBtn');
+                if (btn) btn.style.display = 'block';
+            });
+            map.on('zoomstart', () => {
+                if (!isProgrammaticUpdate) {
+                    isAutoCenterEnabled = false;
+                    const btn = document.getElementById('dynamicRecenterBtn');
+                    if (btn) btn.style.display = 'block';
+                }
+            });
+        }
     }
 
-    const bounds = new maplibregl.LngLatBounds();
+    let bounds;
+    if (useLeaflet) {
+        bounds = L.latLngBounds();
+    } else {
+        bounds = new maplibregl.LngLatBounds();
+    }
+
     let hasMarkers = false;
 
     // 1. Members
@@ -883,7 +935,8 @@ function updateMapMarkers() {
     // Remove old markers that are no longer selected or valid
     for (const [email, m] of Object.entries(memberMarkers)) {
         if (!selectedMemberEmails.has(email)) {
-            m.remove();
+            if (useLeaflet) map.removeLayer(m);
+            else m.remove();
             delete memberMarkers[email];
         }
     }
@@ -905,39 +958,64 @@ function updateMapMarkers() {
             const displayName = names[email] || email;
             const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtml(member.address)}` : ''}`;
 
-            if (memberMarkers[email]) {
-                memberMarkers[email].setLngLat([lng, lat]);
-                memberMarkers[email].getPopup().setHTML(popupContent);
-                // Update label text
-                const el = memberMarkers[email].getElement();
-                const label = el.querySelector('.marker-label-container');
-                if (label) label.innerText = displayName;
+            if (useLeaflet) {
+                // --- LEAFLET MARKER UPDATE ---
+                if (memberMarkers[email]) {
+                    memberMarkers[email].setLatLng([lat, lng]).setPopupContent(popupContent);
+                    memberMarkers[email].setTooltipContent(escapeHtml(displayName));
+                } else {
+                    const colorCfg = getMemberColorByIndex(index);
+                    const customIcon = new L.Icon({
+                        iconUrl: colorCfg.icon,
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
+
+                    memberMarkers[email] = L.marker([lat, lng], { icon: customIcon })
+                        .addTo(map)
+                        .bindPopup(popupContent)
+                        .bindTooltip(escapeHtml(displayName), { permanent: true, direction: 'bottom', className: 'marker-label' });
+                }
+                bounds.extend([lat, lng]);
             } else {
-                const colorCfg = getMemberColorByIndex(index);
+                // --- MAPLIBRE MARKER UPDATE ---
+                if (memberMarkers[email]) {
+                    memberMarkers[email].setLngLat([lng, lat]);
+                    memberMarkers[email].getPopup().setHTML(popupContent);
+                    // Update label text
+                    const el = memberMarkers[email].getElement();
+                    const label = el.querySelector('.marker-label-container');
+                    if (label) label.innerText = displayName;
+                } else {
+                    const colorCfg = getMemberColorByIndex(index);
 
-                const container = document.createElement('div');
-                container.className = 'custom-marker-container';
+                    const container = document.createElement('div');
+                    container.className = 'custom-marker-container';
 
-                const img = document.createElement('img');
-                img.src = colorCfg.icon;
-                img.style.width = '25px';
-                img.style.height = '41px';
+                    const img = document.createElement('img');
+                    img.src = colorCfg.icon;
+                    img.style.width = '25px';
+                    img.style.height = '41px';
 
-                const label = document.createElement('div');
-                label.className = 'marker-label-container';
-                label.innerText = displayName;
+                    const label = document.createElement('div');
+                    label.className = 'marker-label-container';
+                    label.innerText = displayName;
 
-                container.appendChild(img);
-                container.appendChild(label);
+                    container.appendChild(img);
+                    container.appendChild(label);
 
-                const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+                    const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
 
-                memberMarkers[email] = new maplibregl.Marker({ element: container, anchor: 'bottom' })
-                    .setLngLat([lng, lat])
-                    .setPopup(popup)
-                    .addTo(map);
+                    memberMarkers[email] = new maplibregl.Marker({ element: container, anchor: 'bottom' })
+                        .setLngLat([lng, lat])
+                        .setPopup(popup)
+                        .addTo(map);
+                }
+                bounds.extend([lng, lat]);
             }
-            bounds.extend([lng, lat]);
             hasMarkers = true;
         }
     }
@@ -957,51 +1035,101 @@ function updateMapMarkers() {
         if (lat && lng) {
             const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%${ownerLocation.address ? `<br>${escapeHtml(ownerLocation.address)}` : ''}`;
 
-            if (!ownerMarker) {
-                const container = document.createElement('div');
-                container.className = 'custom-marker-container';
+            if (useLeaflet) {
+                 // --- LEAFLET OWNER ---
+                if (!ownerMarker) {
+                    const goldIcon = new L.Icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
 
-                const img = document.createElement('img');
-                img.src = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png';
-                img.style.width = '25px';
-                img.style.height = '41px';
-
-                const label = document.createElement('div');
-                label.className = 'marker-label-container';
-                label.innerText = ownerName;
-
-                container.appendChild(img);
-                container.appendChild(label);
-
-                const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
-
-                ownerMarker = new maplibregl.Marker({ element: container, anchor: 'bottom' })
-                    .setLngLat([lng, lat])
-                    .setPopup(popup)
-                    .addTo(map);
+                    ownerMarker = L.marker([lat, lng], { icon: goldIcon })
+                        .addTo(map)
+                        .bindPopup(popupContent)
+                        .bindTooltip(escapeHtml(ownerName), { permanent: true, direction: 'bottom', className: 'marker-label' });
+                } else {
+                    ownerMarker.setLatLng([lat, lng]).setPopupContent(popupContent);
+                    ownerMarker.setTooltipContent(escapeHtml(ownerName));
+                    if (ownerMarker.getPopup().isOpen()) {
+                        ownerMarker.openPopup(); // Refresh content if open
+                    }
+                }
+                bounds.extend([lat, lng]);
             } else {
-                ownerMarker.setLngLat([lng, lat]);
-                ownerMarker.getPopup().setHTML(popupContent);
-                const el = ownerMarker.getElement();
-                const label = el.querySelector('.marker-label-container');
-                if (label) label.innerText = ownerName;
+                 // --- MAPLIBRE OWNER ---
+                if (!ownerMarker) {
+                    const container = document.createElement('div');
+                    container.className = 'custom-marker-container';
+
+                    const img = document.createElement('img');
+                    img.src = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png';
+                    img.style.width = '25px';
+                    img.style.height = '41px';
+
+                    const label = document.createElement('div');
+                    label.className = 'marker-label-container';
+                    label.innerText = ownerName;
+
+                    container.appendChild(img);
+                    container.appendChild(label);
+
+                    const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+
+                    ownerMarker = new maplibregl.Marker({ element: container, anchor: 'bottom' })
+                        .setLngLat([lng, lat])
+                        .setPopup(popup)
+                        .addTo(map);
+                } else {
+                    ownerMarker.setLngLat([lng, lat]);
+                    ownerMarker.getPopup().setHTML(popupContent);
+                    const el = ownerMarker.getElement();
+                    const label = el.querySelector('.marker-label-container');
+                    if (label) label.innerText = ownerName;
+                }
+                bounds.extend([lng, lat]);
             }
-            bounds.extend([lng, lat]);
             hasMarkers = true;
         }
     } else if (ownerMarker) {
-        ownerMarker.remove();
+        if (useLeaflet) map.removeLayer(ownerMarker);
+        else ownerMarker.remove();
         ownerMarker = null;
     }
 
     // 3. User (Viewer) Location
     if (userLocation && proximityEnabled) {
-        if (!userMarker) {
-            updateUserMarker(); // This creates it
+        if (useLeaflet) {
+            // --- LEAFLET USER ---
+             if (!userMarker) {
+                userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+                    radius: 8,
+                    fillColor: "#4a90e2",
+                    color: "#fff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+            } else {
+                userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+            }
+            bounds.extend([userLocation.lat, userLocation.lng]);
         } else {
-            userMarker.setLngLat([userLocation.lng, userLocation.lat]);
+            // --- MAPLIBRE USER ---
+            if (!userMarker) {
+                const el = document.createElement('div');
+                el.className = 'user-location-dot';
+                userMarker = new maplibregl.Marker({ element: el })
+                    .setLngLat([userLocation.lng, userLocation.lat])
+                    .addTo(map);
+            } else {
+                userMarker.setLngLat([userLocation.lng, userLocation.lat]);
+            }
+            bounds.extend([userLocation.lng, userLocation.lat]);
         }
-        bounds.extend([userLocation.lng, userLocation.lat]);
         hasMarkers = true;
     }
 
@@ -1185,24 +1313,27 @@ function updateMapMarkers() {
         const paddingSide = isMobile ? 20 : 50;
 
         isProgrammaticUpdate = true;
-        map.fitBounds(bounds, {
-            padding: {
-                top: paddingSide,
-                bottom: paddingBottom,
-                left: paddingSide,
-                right: paddingSide
-            },
-            maxZoom: 18
-        });
-        isProgrammaticUpdate = false;
-    }
 
-    // updateProximityUI(lat, lng); // Requires single target, disable if multiple
-    if (selectedMemberEmails.size === 1) {
-        const entry = locationsMap.get(Array.from(selectedMemberEmails)[0]);
-        if (entry) updateProximityUI(entry.member.latitude, entry.member.longitude);
-    } else {
-        elements.distanceBadge.style.display = 'none';
+        if (useLeaflet) {
+            // Leaflet FitBounds
+            map.fitBounds(bounds, {
+                paddingTopLeft: [paddingSide, paddingSide],
+                paddingBottomRight: [paddingSide, paddingBottom],
+                maxZoom: 18
+            });
+        } else {
+            // MapLibre FitBounds
+            map.fitBounds(bounds, {
+                padding: {
+                    top: paddingSide,
+                    bottom: paddingBottom,
+                    left: paddingSide,
+                    right: paddingSide
+                },
+                maxZoom: 18
+            });
+        }
+        isProgrammaticUpdate = false;
     }
 }
 
@@ -1306,12 +1437,16 @@ function useOwnerLocationAsFallback() {
 }
 
 function stopUserTracking() {
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const useLeaflet = config.mapEngine === 'leaflet';
+
     if (watchId) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
     }
     if (userMarker) {
-        userMarker.remove();
+        if (useLeaflet) map.removeLayer(userMarker);
+        else userMarker.remove();
         userMarker = null;
     }
     userLocation = null;
@@ -1320,15 +1455,32 @@ function stopUserTracking() {
 
 function updateUserMarker() {
     if (!map || !userLocation || !proximityEnabled) return;
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const useLeaflet = config.mapEngine === 'leaflet';
 
-    if (!userMarker) {
-        const el = document.createElement('div');
-        el.className = 'user-location-dot';
-        userMarker = new maplibregl.Marker({ element: el })
-            .setLngLat([userLocation.lng, userLocation.lat])
-            .addTo(map);
+    if (useLeaflet) {
+         if (!userMarker) {
+            userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+                radius: 8,
+                fillColor: "#4a90e2",
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+        } else {
+            userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+        }
     } else {
-        userMarker.setLngLat([userLocation.lng, userLocation.lat]);
+        if (!userMarker) {
+            const el = document.createElement('div');
+            el.className = 'user-location-dot';
+            userMarker = new maplibregl.Marker({ element: el })
+                .setLngLat([userLocation.lng, userLocation.lat])
+                .addTo(map);
+        } else {
+            userMarker.setLngLat([userLocation.lng, userLocation.lat]);
+        }
     }
 }
 
@@ -1514,6 +1666,11 @@ function setupEventListeners() {
             stopUserTracking();
         }
         updateMapMarkers();
+    });
+
+    // Map Engine Toggle
+    elements.mapEngineInput.addEventListener('change', (e) => {
+        elements.mapStyleGroup.style.display = (e.target.value === 'maplibre') ? 'block' : 'none';
     });
 }
 
