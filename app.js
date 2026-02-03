@@ -858,11 +858,19 @@ function showMap(email) {
 function updateMapMarkers() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     const useLeaflet = config.mapEngine === 'leaflet';
+    const targetStyleUrl = config.mapStyleUrl || './style.json';
 
-    // If switching engines, destroy previous map instance if it doesn't match
+    // If switching engines or styles (for MapLibre), destroy previous map instance
     if (map) {
-        const isLeafletInstance = !!map.removeLayer; // Duck typing check
-        if (useLeaflet !== isLeafletInstance) {
+        const currentEngine = map._family_locator_engine;
+        const currentStyle = map._family_locator_style;
+        const targetEngine = useLeaflet ? 'leaflet' : 'maplibre';
+
+        let shouldReset = false;
+        if (currentEngine !== targetEngine) shouldReset = true;
+        if (targetEngine === 'maplibre' && currentStyle !== targetStyleUrl) shouldReset = true;
+
+        if (shouldReset) {
             map.remove();
             map = null;
             memberMarkers = {};
@@ -876,6 +884,7 @@ function updateMapMarkers() {
         if (useLeaflet) {
             // --- LEAFLET INITIALIZATION ---
             map = L.map('mapContainer').setView([0, 0], 2);
+            map._family_locator_engine = 'leaflet';
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors'
@@ -895,14 +904,15 @@ function updateMapMarkers() {
             });
         } else {
             // --- MAPLIBRE INITIALIZATION ---
-            const styleUrl = config.mapStyleUrl || './style.json';
             map = new maplibregl.Map({
                 container: 'mapContainer',
-                style: styleUrl,
+                style: targetStyleUrl,
                 center: [0, 0],
                 zoom: 1,
                 attributionControl: true
             });
+            map._family_locator_engine = 'maplibre';
+            map._family_locator_style = targetStyleUrl;
             map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
             map.on('dragstart', () => {
