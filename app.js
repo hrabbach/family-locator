@@ -415,7 +415,7 @@ function showConfig() {
     elements.apiKeyInput.value = config.apiKey || '';
     elements.apiUserNameInput.value = config.apiUserName || '';
     elements.mapEngineInput.value = config.mapEngine || 'maplibre';
-    elements.mapStyleUrlInput.value = config.mapStyleUrl || '';
+    elements.mapStyleUrlInput.value = config.mapStyleUrl || './style.json';
 
     // Visibility of Style Input
     elements.mapStyleGroup.style.display = (elements.mapEngineInput.value === 'maplibre') ? 'block' : 'none';
@@ -895,7 +895,7 @@ function updateMapMarkers() {
             });
         } else {
             // --- MAPLIBRE INITIALIZATION ---
-            const styleUrl = config.mapStyleUrl || 'https://tiles.openfreemap.org/styles/liberty';
+            const styleUrl = config.mapStyleUrl || './style.json';
             map = new maplibregl.Map({
                 container: 'mapContainer',
                 style: styleUrl,

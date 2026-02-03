@@ -101,9 +101,8 @@ Alternatively, configure via URL: `?lat=51.505&lon=-0.09`
 You can switch between two map engines in the **Settings** view:
 
 1.  **MapLibre GL JS (Vector - Default)**: Uses modern vector tiles.
-    -   *Default Style*: Uses OpenFreeMap 'Liberty' style.
+    -   *Default Style*: Loads `./style.json` (OpenFreeMap 'Liberty'). You can modify this file directly to change the default appearance.
     -   *Custom Style*: Enter a URL to any MapLibre-compatible style JSON (e.g., from Protomaps, MapTiler, or a self-hosted style).
-    -   See `style_sample.json` for a reference of the default style structure.
 2.  **Leaflet (Raster - Classic)**: Uses traditional OpenStreetMap raster tiles.
     -   Best for older devices or low-bandwidth environments.
 
