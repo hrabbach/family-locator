@@ -117,6 +117,9 @@
 
             <div
                 style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <button id="shareLocationBtn" style="width: 100%; background: var(--accent-color); color: white; margin-bottom: 0.5rem; display: none;">
+                    Share Live Location
+                </button>
                 <button id="shareConfigBtn"
                     style="width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem;">Copy
                     Shareable Config URL</button>
@@ -174,6 +177,40 @@
                 <button id="cancelModal"
                     style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">Cancel</button>
                 <button id="saveModal">Save Name</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Sharing Location -->
+    <div id="shareModalBackdrop" class="modal-backdrop">
+        <div class="modal-content glass-panel">
+            <h3>Share Live Location</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Create a temporary link to share your location with others. They will be able to see you on the map.
+            </p>
+
+            <div class="form-group">
+                <label>Duration</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="duration-btn active" data-duration="3600">1 Hour</button>
+                    <button class="duration-btn" data-duration="7200">2 Hours</button>
+                    <button class="duration-btn" data-duration="28800">8 Hours</button>
+                    <button class="duration-btn" data-duration="86400">24 Hours</button>
+                </div>
+            </div>
+
+            <div id="generatedLinkContainer" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Share this link:</div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="shareLinkInput" readonly style="flex: 1; font-size: 0.85rem;">
+                    <button id="copyShareLinkBtn" style="padding: 0.2rem 0.6rem;">Copy</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button id="closeShareModal"
+                    style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">Close</button>
+                <button id="generateShareLinkBtn">Generate Link</button>
             </div>
         </div>
     </div>
