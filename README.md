@@ -20,6 +20,7 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
     -   **Manual Override**: Auto-centering pauses when you interact with the map, with a one-tap "Recenter" button to snap back to the action.
 -   **Swift Setup**: Quickly configure the app by scanning a configuration QR code from your Dawarich profile or via secure manual entry.
 -   **Remote Configuration**: Share or deploy pre-configured instances by passing all settings and name mappings via URL parameters.
+-   **Secure Location Sharing**: Generate temporary, time-limited sharing links for friends and family without exposing your API keys.
 -   **Screen Wake Lock**: Keep your device screen active while tracking to avoid interruptions.
 -   **Reverse Geocoding**: Automatically resolve latitude/longitude into human-readable addresses using the Photon API. Features local caching to minimize API calls and ensure snappy UI updates.
 -   **Stationary Mode**: Configure a fixed location for wall-mounted displays to see distances to the owner and track them on the map.
@@ -31,6 +32,17 @@ A lightweight, self-hosted Progressive Web App (PWA) designed to track family me
 > Using URL parameters to configure the app (especially the `key` parameter) will put your API key in the browser history.
 > **Avoid using this on public or shared computers.**
 > The app attempts to "clean" the URL from the address bar immediately after ingestion, but it may still remain in the browser's history log.
+
+## Location Sharing
+
+You can securely share your live location with others by generating a temporary link.
+
+-   **Secure**: The sharing link uses a signed token (JWT) verified by a server-side component. The recipient **never** receives your API keys.
+-   **Time-Limited**: Choose a duration (e.g., 1 hour, 8 hours). The link automatically expires afterwards.
+-   **View Only**: Recipients see a simplified map view with your location and name. They cannot access your dashboard or settings.
+-   **Merge Mode**: If a user already has the Family Locator app installed and configured, opening a shared link will temporarily add the shared person to their map (merged with their own family members).
+
+To use this feature, the application must be deployed with the accompanying Node.js server component (see **Docker Deployment**).
 
 ## URL Parameters
 
@@ -60,6 +72,7 @@ These control the current session and are not permanently stored.
     -   `?emails=user1@example.com,user2@example.com`: Selects specific members by email.
 -   **`show_owner=true`**: Automatically includes your own location (API owner) on the map alongside selected members.
 -   **`collapsed=true`**: Starts the map with the member overlay collapsed.
+-   **`token=...`**: Activates Shared Mode using a secure token.
 
 *Example Individual Setup*: `https://your-locator.com/?server=https://dawarich.io&key=secret_123&name=Holger`
 *Example Bulk Setup*: `https://your-locator.com/?config=eyJjb25maW...`
@@ -67,6 +80,33 @@ These control the current session and are not permanently stored.
 ## How it Works
 
 The app periodically fetches location data (every 10 seconds) from your self-hosted Dawarich server. It handles everything client-side for privacy and speed, storing your API keys and configuration securely in local storage.
+
+## Docker Deployment
+
+The recommended way to deploy Family Locator is via Docker. The image includes both the Nginx web server and the Node.js API server required for secure sharing.
+
+### Prerequisites
+You must provide your Dawarich credentials to the container via environment variables to enable the sharing feature.
+
+### Run Command
+```bash
+docker run -d \
+  -p 8080:80 \
+  -e DAWARICH_API_URL="https://your-dawarich-instance.com" \
+  -e DAWARICH_API_KEY="your-api-key" \
+  -e JWT_SECRET="optional-random-secret-string" \
+  --name family-locator \
+  hrabbach/family-locator:latest
+```
+
+-   `DAWARICH_API_URL`: The full URL to your Dawarich instance.
+-   `DAWARICH_API_KEY`: A valid API key for fetching location data.
+-   `JWT_SECRET`: (Optional) A secret string used to sign sharing tokens. If not provided, a random one is generated on startup (invalidating previous links on restart).
+
+The application will be available at `http://localhost:8080`.
+
+### Subpath Deployment
+The container is designed to be location-agnostic. You can serve it under a subpath (e.g., `https://example.com/tracker/`) using a reverse proxy. No additional configuration is needed inside the container; Nginx will automatically handle assets and API requests relative to the root.
 
 ## Reverse Geocoding Setup
 
@@ -106,14 +146,16 @@ You can switch between two map engines in the **Settings** view:
 2.  **Leaflet (Raster - Classic)**: Uses traditional OpenStreetMap raster tiles.
     -   Best for older devices or low-bandwidth environments.
 
-## Installation
+## Installation (Manual)
 
-Family Locator is built with standard web technologies (HTML, CSS, JS) and can be hosted on any static web server.
+If you prefer not to use Docker or the sharing feature:
 
 1.  Copy the project files to your web server's public directory (e.g., `/familytrack/`).
 2.  Open the URL in your browser.
 3.  Enter your Dawarich Base URL and API Key (or scan your config QR).
 4.  (Optional) "Add to Home Screen" via your browser's menu to install as a PWA.
+
+*Note: The "Share Live Location" button will not appear if the backend server is not detected.*
 
 ---
 *Maintained with built-in cache-busting, dual map engine support (MapLibre/Leaflet), and Service Worker capability.*
