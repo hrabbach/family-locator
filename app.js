@@ -882,6 +882,11 @@ function updateUI(data) {
 
     // Check if we need to show the View Selected button
     const hasSelection = selectedMemberEmails.size > 0;
+
+    // Check if server configured to show share button
+    if (elements.shareLocationBtn) {
+        elements.shareLocationBtn.style.display = serverConfigured ? 'flex' : 'none';
+    }
     elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
     elements.viewSelectedBtn.onclick = () => showMap();
@@ -950,7 +955,8 @@ function updateUI(data) {
     htmlContent += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
-        const displayName = names[member.email] || member.email;
+        // Use name from object if available (for shared users), fallback to names map, then email
+        const displayName = names[member.email] || member.name || member.email;
         const isDefault = displayName === member.email;
         const isSelected = selectedMemberEmails.has(member.email);
 
@@ -1902,7 +1908,8 @@ function setupEventListeners() {
         elements.durationBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 elements.durationBtns.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
+                // Use closest in case we add icons later, or just target
+                e.target.closest('button').classList.add('active');
             });
         });
     }
@@ -1925,7 +1932,13 @@ function setupEventListeners() {
 
                 if (res.ok) {
                     const data = await res.json();
-                    const link = `${window.location.origin}${window.location.pathname}?token=${data.token}`;
+                    let link = `${window.location.origin}${window.location.pathname}?token=${data.token}`;
+
+                    // Append style URL if custom
+                    if (config.mapStyleUrl && config.mapStyleUrl !== './style.json') {
+                         link += `&style=${encodeURIComponent(config.mapStyleUrl)}`;
+                    }
+
                     elements.shareLinkInput.value = link;
                     elements.generatedLinkContainer.style.display = 'block';
                 } else {
