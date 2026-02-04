@@ -814,3 +814,10 @@ input:checked+.slider:before {
     color: white;
     border-color: var(--accent-color);
 }
+
+/* Force duration button active state */
+button.duration-btn.active {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
+}
