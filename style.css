@@ -785,3 +785,46 @@ input:checked+.slider:before {
     }
 }
 }
+/* Sharing Modal Styles */
+.duration-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.duration-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.duration-btn:hover:not(.active) {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+/* Ensure button specificity */
+#shareModalBackdrop .duration-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* Force duration button active state */
+button.duration-btn.active {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
+}
+
+/* Force duration button active state (renamed to is-selected) */
+button.duration-btn.is-selected {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
+}

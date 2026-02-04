@@ -22,11 +22,11 @@
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css' />
     <script src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'></script>
 
-    <link rel="icon" type="image/png" href="./icon.png?v=2.6.0">
-    <link rel="stylesheet" href="./style.css?v=2.6.0">
-    <link rel="manifest" href="./manifest.json?v=2.6.0">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.7.0">
+    <link rel="stylesheet" href="./style.css?v=2.7.0">
+    <link rel="manifest" href="./manifest.json?v=2.7.0">
     <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.6.0">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.7.0">
 </head>
 
 <body>
@@ -135,6 +135,10 @@
 
         <!-- Dashboard View -->
         <div id="dashboardView" class="glass-panel dashboard-view">
+            <button id="shareLocationBtn" style="width: 100%; background: var(--accent-color); color: white; margin-bottom: 1rem; display: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Share Live Location
+            </button>
             <div id="membersList">
                 <!-- Members will be injected here -->
             </div>
@@ -177,10 +181,44 @@
             </div>
         </div>
     </div>
-    <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.6.0</a>
 
-    <script src="./app.js?v=2.6.0"></script>
+    <!-- Modal for Sharing Location -->
+    <div id="shareModalBackdrop" class="modal-backdrop">
+        <div class="modal-content glass-panel">
+            <h3>Share Live Location</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Create a temporary link to share your location with others. They will be able to see you on the map.
+            </p>
+
+            <div class="form-group">
+                <label>Duration</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="duration-btn is-selected" data-duration="3600">1 Hour</button>
+                    <button class="duration-btn" data-duration="7200">2 Hours</button>
+                    <button class="duration-btn" data-duration="28800">8 Hours</button>
+                    <button class="duration-btn" data-duration="86400">24 Hours</button>
+                </div>
+            </div>
+
+            <div id="generatedLinkContainer" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Share this link:</div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="shareLinkInput" readonly style="flex: 1; font-size: 0.85rem;">
+                    <button id="copyShareLinkBtn" style="padding: 0.2rem 0.6rem;">Copy</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button id="closeShareModal"
+                    style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">Close</button>
+                <button id="generateShareLinkBtn">Generate Link</button>
+            </div>
+        </div>
+    </div>
+    <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
+        class="version-tag">v2.7.0</a>
+
+    <script src="./app.js?v=2.7.0"></script>
 </body>
 
 </html>

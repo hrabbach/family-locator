@@ -59,9 +59,24 @@ const elements = {
     modalInput: document.getElementById('newNameInput'),
     modalSaveBtn: document.getElementById('saveModal'),
     modalCancelBtn: document.getElementById('cancelModal'),
+
+    // Share Modal
+    shareLocationBtn: document.getElementById('shareLocationBtn'),
+    shareModal: document.getElementById('shareModalBackdrop'),
+    closeShareModal: document.getElementById('closeShareModal'),
+    generateShareLinkBtn: document.getElementById('generateShareLinkBtn'),
+    generatedLinkContainer: document.getElementById('generatedLinkContainer'),
+    shareLinkInput: document.getElementById('shareLinkInput'),
+    copyShareLinkBtn: document.getElementById('copyShareLinkBtn'),
+    durationBtns: document.querySelectorAll('.duration-btn'),
 };
 
 let currentEditingEmail = null;
+let isSharedMode = false;
+let shareToken = null;
+let sharedLocations = []; // Store shared members separately for merging
+let sharedStyleUrl = null; // Store style from token
+let serverConfigured = false;
 let html5QrCode = null;
 let map = null;
 let memberMarkers = {}; // Object to store markers by email
@@ -365,6 +380,23 @@ function init() {
 
     // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    // Shared Mode Entry Point
+    if (token) {
+        const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+        if (config && config.baseUrl && config.apiKey) {
+            // User has their own config, merge the shared location
+            initMergeMode(token);
+        } else {
+            // User is a guest, show only shared location
+            initSharedMode(token);
+            return;
+        }
+    }
+
+    checkServerStatus();
+
     const emailsParam = urlParams.get('emails');
     const showOwnerParam = urlParams.get('show_owner');
     const collapsedParam = urlParams.get('collapsed');
@@ -406,6 +438,170 @@ function init() {
         }
     } else {
         showConfig();
+    }
+}
+
+async function checkServerStatus() {
+    try {
+        // Adjust path if needed. We assume app is at /familytrack/
+        // and api is at /familytrack/api/
+        const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/status';
+        const response = await fetch(apiPath);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.configured) {
+                serverConfigured = true;
+                if (elements.shareLocationBtn) {
+                    elements.shareLocationBtn.style.display = 'block';
+                }
+            }
+        }
+    } catch (e) {
+        // Server component not installed or not reachable
+        console.log("Server component not detected.");
+    }
+}
+
+function initMergeMode(token) {
+    console.log("Entering Shared Merge Mode");
+    shareToken = token;
+
+    // Start normal tracking will happen in main init flow
+    // We just need to start polling the shared data
+    setInterval(fetchSharedData, 10000);
+    fetchSharedData(); // Initial fetch
+
+    // We don't hide UI, allowing user to see their own dashboard + shared member
+}
+
+function initSharedMode(token) {
+    isSharedMode = true;
+    shareToken = token;
+
+    // Hide UI
+    elements.configView.classList.remove('active');
+    elements.dashboardView.classList.remove('active');
+    elements.mapView.classList.add('active');
+
+    // Force Keep Awake
+    requestWakeLock();
+
+    // Setup Map Config Defaults if missing
+    // We do NOT set style here anymore, we wait for fetchSharedData
+    if (!localStorage.getItem(CONFIG_KEY)) {
+        // Set defaults for map engine
+        const tempConfig = {
+            mapEngine: 'maplibre',
+            mapStyleUrl: './style.json', // Will be overridden by sharedStyleUrl
+            geocodeEnabled: true,
+            photonUrl: 'https://photon.komoot.io'
+        };
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(tempConfig));
+    }
+
+    // Start Polling
+    fetchSharedData();
+    clearInterval(refreshInterval);
+    refreshInterval = setInterval(fetchSharedData, 10000);
+
+    // Countdown
+    clearInterval(countdownInterval);
+    secondsToRefresh = 10;
+    countdownInterval = setInterval(() => {
+        secondsToRefresh--;
+        if (secondsToRefresh < 0) secondsToRefresh = 10;
+        const mapReloadCountdown = document.getElementById('mapReloadCountdown');
+        if (mapReloadCountdown) mapReloadCountdown.innerText = `(${secondsToRefresh}s)`;
+    }, 1000);
+}
+
+async function fetchSharedData() {
+    try {
+        if (isSharedMode) secondsToRefresh = 10;
+
+        const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/shared/location';
+        const response = await fetch(`${apiPath}?token=${shareToken}`);
+
+        if (response.status === 410) {
+            if (isSharedMode) {
+                alert("This sharing link has expired.");
+                clearInterval(refreshInterval);
+                window.location.href = window.location.pathname;
+            } else {
+                console.log("Shared link expired");
+                sharedLocations = [];
+            }
+            return;
+        }
+
+        if (!response.ok) throw new Error("Failed to fetch shared location");
+
+        const data = await response.json();
+        if (!data.email) data.email = 'SHARED_USER';
+
+        // Mark as shared for UI distinction if needed
+        data.isShared = true;
+
+        sharedLocations = [data];
+
+        // Resolve address
+        data.address = resolveAddress(data);
+
+        // Handle Shared Style
+        if (data.styleUrl && data.styleUrl !== sharedStyleUrl) {
+            sharedStyleUrl = data.styleUrl;
+            // Force map reset/update to apply style
+            if (map) {
+                // If it's maplibre and we are in shared mode, we might want to apply the new style
+                // updateMapMarkers checks config.mapStyleUrl.
+                // We need updateMapMarkers to respect sharedStyleUrl.
+                updateMapMarkers();
+            }
+        }
+
+        if (isSharedMode) {
+            // View Only Mode: Replace everything
+            lastLocations = [data];
+            selectedMemberEmails.add(data.email);
+            if (elements.mapView.classList.contains('active')) {
+                updateMapMarkers();
+            }
+        } else {
+            // Merge Mode: Update UI if dashboard is active or map is active
+            // We need to merge with existing lastLocations
+            // But lastLocations is overwritten by main fetchData.
+            // We should just trigger a UI update combining them.
+            // Note: This might cause a blip if main fetch hasn't run yet.
+
+            // To be safe, we rely on the main loop to merge,
+            // BUT if we just got new data, we should probably force update?
+            // Let's force update if we have main data.
+            if (lastLocations.length > 0 || ownerLocation) {
+                 const combined = {
+                     locations: [...lastLocations, ...sharedLocations]
+                 };
+                 // We don't want to overwrite lastLocations global permanently with duplicates?
+                 // Actually updateUI takes 'data' arg.
+                 if (elements.dashboardView.classList.contains('active')) {
+                     updateUI(combined);
+                 }
+                 if (elements.mapView.classList.contains('active')) {
+                     // updateMapMarkers reads global 'lastLocations'.
+                     // We need to temporarily patch it or update the logic there.
+                     // A cleaner way is to make 'lastLocations' a getter? No.
+                     // Let's just append to lastLocations strictly for the view?
+                     // No, that grows it indefinitely.
+
+                     // Solution: updateMapMarkers should read (lastLocations + sharedLocations)
+                     // But I can't easily change updateMapMarkers signature everywhere.
+                     // I will modify updateMapMarkers to look at sharedLocations global.
+                     updateMapMarkers();
+                 }
+            }
+        }
+
+    } catch (e) {
+        console.error("Shared fetch error", e);
     }
 }
 
@@ -628,6 +824,11 @@ async function fetchData() {
             m.address = resolveAddress(m);
         });
 
+        // Merge shared locations
+        if (sharedLocations.length > 0) {
+            data.locations = [...data.locations, ...sharedLocations];
+        }
+
         updateUI(data);
 
         // Update map if active
@@ -684,6 +885,11 @@ function updateUI(data) {
 
     // Check if we need to show the View Selected button
     const hasSelection = selectedMemberEmails.size > 0;
+
+    // Check if server configured to show share button
+    if (elements.shareLocationBtn) {
+        elements.shareLocationBtn.style.display = serverConfigured ? 'flex' : 'none';
+    }
     elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
     elements.viewSelectedBtn.onclick = () => showMap();
@@ -752,7 +958,8 @@ function updateUI(data) {
     htmlContent += data.locations.map((member, index) => {
         const batteryClass = getBatteryClass(member.battery);
         const timeStr = formatRelativeTime(member.timestamp);
-        const displayName = names[member.email] || member.email;
+        // Use name from object if available (for shared users), fallback to names map, then email
+        const displayName = names[member.email] || member.name || member.email;
         const isDefault = displayName === member.email;
         const isSelected = selectedMemberEmails.has(member.email);
 
@@ -858,7 +1065,8 @@ function showMap(email) {
 function updateMapMarkers() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     const useLeaflet = config.mapEngine === 'leaflet';
-    const targetStyleUrl = config.mapStyleUrl || './style.json';
+    // Use shared style if available and in shared mode, otherwise config
+    const targetStyleUrl = (isSharedMode && sharedStyleUrl) ? sharedStyleUrl : (config.mapStyleUrl || './style.json');
 
     // If switching engines or styles (for MapLibre), destroy previous map instance
     if (map) {
@@ -953,7 +1161,10 @@ function updateMapMarkers() {
 
     // Create a map for fast lookup to avoid O(N*M) complexity
     const locationsMap = new Map();
-    lastLocations.forEach((m, index) => {
+    // Merge shared locations for map display
+    const allLocations = [...lastLocations, ...sharedLocations];
+
+    allLocations.forEach((m, index) => {
         locationsMap.set(m.email, { member: m, index });
     });
 
@@ -965,7 +1176,7 @@ function updateMapMarkers() {
             const index = entry.index;
             const lat = member.latitude;
             const lng = member.longitude;
-            const displayName = names[email] || email;
+            const displayName = names[email] || member.name || email;
             const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtml(member.address)}` : ''}`;
 
             if (useLeaflet) {
@@ -1173,7 +1384,7 @@ function updateMapMarkers() {
             const member = entry.member;
             const index = entry.index;
             usersToShow.push({
-                name: names[email] || email,
+                name: names[email] || member.name || email,
                 email: email,
                 timestamp: member.timestamp,
                 battery: member.battery,
@@ -1279,17 +1490,19 @@ function updateMapMarkers() {
         recenterBtn.style.display = 'none';
     };
 
-    const closeBtn = document.createElement('button');
-    closeBtn.innerText = 'Close'; // Renamed to simple "Close"
-    closeBtn.className = 'edit-name-btn';
-    closeBtn.style.padding = '0.3rem 1rem';
-    closeBtn.style.fontSize = '0.8rem';
-    closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
-    closeBtn.style.color = 'var(--text-primary)';
-    closeBtn.onclick = closeMap;
-
     buttonsContainer.appendChild(recenterBtn);
-    buttonsContainer.appendChild(closeBtn);
+
+    if (!isSharedMode) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = 'Close'; // Renamed to simple "Close"
+        closeBtn.className = 'edit-name-btn';
+        closeBtn.style.padding = '0.3rem 1rem';
+        closeBtn.style.fontSize = '0.8rem';
+        closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
+        closeBtn.style.color = 'var(--text-primary)';
+        closeBtn.onclick = closeMap;
+        buttonsContainer.appendChild(closeBtn);
+    }
 
     cardFooter.appendChild(toggleContainer);
     cardFooter.appendChild(buttonsContainer);
@@ -1682,6 +1895,76 @@ function setupEventListeners() {
     elements.mapEngineInput.addEventListener('change', (e) => {
         elements.mapStyleGroup.style.display = (e.target.value === 'maplibre') ? 'block' : 'none';
     });
+
+    // Share Modal Events
+    if (elements.shareLocationBtn) {
+        elements.shareLocationBtn.addEventListener('click', () => {
+            elements.shareModal.classList.add('active');
+            elements.generatedLinkContainer.style.display = 'none';
+        });
+    }
+
+    if (elements.closeShareModal) {
+        elements.closeShareModal.addEventListener('click', () => {
+            elements.shareModal.classList.remove('active');
+        });
+    }
+
+    if (elements.durationBtns) {
+        elements.durationBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Remove class from all
+                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('is-selected'));
+                // Add to clicked
+                const target = e.target.closest('button');
+                if (target) {
+                    target.classList.add('is-selected');
+                }
+            });
+        });
+    }
+
+    if (elements.generateShareLinkBtn) {
+        elements.generateShareLinkBtn.addEventListener('click', async () => {
+            const activeBtn = document.querySelector('.duration-btn.is-selected');
+            const duration = activeBtn ? activeBtn.dataset.duration : 3600;
+
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+            const name = config.apiUserName || 'User';
+            const styleUrl = config.mapStyleUrl || './style.json';
+
+            try {
+                const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/share';
+                const res = await fetch(apiPath, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ duration, name, styleUrl })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    let link = `${window.location.origin}${window.location.pathname}?token=${data.token}`;
+                    elements.shareLinkInput.value = link;
+                    elements.generatedLinkContainer.style.display = 'block';
+                } else {
+                    alert("Failed to generate link.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error connecting to server.");
+            }
+        });
+    }
+
+    if (elements.copyShareLinkBtn) {
+        elements.copyShareLinkBtn.addEventListener('click', () => {
+            elements.shareLinkInput.select();
+            document.execCommand('copy');
+            const originalText = elements.copyShareLinkBtn.innerText;
+            elements.copyShareLinkBtn.innerText = 'Copied!';
+            setTimeout(() => elements.copyShareLinkBtn.innerText = originalText, 2000);
+        });
+    }
 }
 
 init();

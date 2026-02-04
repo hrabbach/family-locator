@@ -1,0 +1,14 @@
+{
+  "name": "family-locator-server",
+  "version": "1.0.0",
+  "description": "Server-side component for Family Locator sharing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5"
+  }
+}
