@@ -1384,7 +1384,7 @@ function updateMapMarkers() {
             const member = entry.member;
             const index = entry.index;
             usersToShow.push({
-                name: names[email] || email,
+                name: names[email] || member.name || email,
                 email: email,
                 timestamp: member.timestamp,
                 battery: member.battery,
