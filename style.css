@@ -784,7 +784,7 @@ input:checked+.slider:before {
         display: none;
     }
 }
-}
+
 /* Sharing Modal Styles */
 .duration-btn {
     padding: 0.5rem 1rem;
@@ -810,21 +810,21 @@ input:checked+.slider:before {
 
 /* Ensure button specificity */
 #shareModalBackdrop .duration-btn.active {
-    background: var(--accent-color);
+    background: var(--success-color);
     color: white;
-    border-color: var(--accent-color);
+    border-color: var(--success-color);
 }
 
 /* Force duration button active state */
 button.duration-btn.active {
-    background-color: var(--accent-color) !important;
+    background-color: var(--success-color) !important;
     color: white !important;
-    border-color: var(--accent-color) !important;
+    border-color: var(--success-color) !important;
 }
 
 /* Force duration button active state (renamed to is-selected) */
 button.duration-btn.is-selected {
-    background-color: var(--accent-color) !important;
+    background-color: var(--success-color) !important;
     color: white !important;
-    border-color: var(--accent-color) !important;
+    border-color: var(--success-color) !important;
 }

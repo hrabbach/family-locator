@@ -120,6 +120,10 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
             if (decoded.styleUrl) {
                 locationData.styleUrl = decoded.styleUrl;
             }
+            // Include expiration time
+            if (decoded.exp) {
+                locationData.expires_at = decoded.exp;
+            }
             res.json(locationData);
         } else {
             res.status(404).json({ error: 'Location not found or outdated' });

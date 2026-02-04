@@ -76,6 +76,7 @@ let isSharedMode = false;
 let shareToken = null;
 let sharedLocations = []; // Store shared members separately for merging
 let sharedStyleUrl = null; // Store style from token
+let sharedExpiresAt = null; // Expiration timestamp (ms)
 let serverConfigured = false;
 let html5QrCode = null;
 let map = null;
@@ -451,8 +452,10 @@ async function checkServerStatus() {
             const data = await response.json();
             if (data.configured) {
                 serverConfigured = true;
+                const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+                const isStationaryMode = config.fixedLat && config.fixedLon;
                 if (elements.shareLocationBtn) {
-                    elements.shareLocationBtn.style.display = 'block';
+                    elements.shareLocationBtn.style.display = (!isStationaryMode) ? 'flex' : 'none';
                 }
             }
         }
@@ -507,12 +510,7 @@ function initSharedMode(token) {
     // Countdown
     clearInterval(countdownInterval);
     secondsToRefresh = 10;
-    countdownInterval = setInterval(() => {
-        secondsToRefresh--;
-        if (secondsToRefresh < 0) secondsToRefresh = 10;
-        const mapReloadCountdown = document.getElementById('mapReloadCountdown');
-        if (mapReloadCountdown) mapReloadCountdown.innerText = `(${secondsToRefresh}s)`;
-    }, 1000);
+    countdownInterval = setInterval(updateCountdown, 1000);
 }
 
 async function fetchSharedData() {
@@ -557,6 +555,10 @@ async function fetchSharedData() {
                 // We need updateMapMarkers to respect sharedStyleUrl.
                 updateMapMarkers();
             }
+        }
+
+        if (data.expires_at) {
+            sharedExpiresAt = data.expires_at * 1000; // API returns seconds
         }
 
         if (isSharedMode) {
@@ -782,6 +784,25 @@ function updateCountdown() {
     if (mapReloadCountdown) {
         mapReloadCountdown.innerText = `(${secondsToRefresh}s)`;
     }
+
+    if (sharedExpiresAt) {
+        const el = document.getElementById('sharedExpiryCountdown');
+        if (el) {
+            const now = Date.now();
+            const diff = sharedExpiresAt - now;
+            if (diff > 0) {
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                el.innerText = `Link expires in: ${hours}h ${minutes}m ${seconds}s`;
+                el.style.display = 'block';
+            } else {
+                el.innerText = 'Link Expired';
+                el.style.color = 'var(--danger-color)';
+                el.style.display = 'block';
+            }
+        }
+    }
 }
 
 function stopTracking() {
@@ -881,6 +902,7 @@ async function fetchOwnerLocation(config) {
 function updateUI(data) {
     if (!data.locations || !Array.isArray(data.locations)) return;
 
+    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
 
     // Check if we need to show the View Selected button
@@ -888,7 +910,8 @@ function updateUI(data) {
 
     // Check if server configured to show share button
     if (elements.shareLocationBtn) {
-        elements.shareLocationBtn.style.display = serverConfigured ? 'flex' : 'none';
+        const isStationaryMode = config.fixedLat && config.fixedLon;
+        elements.shareLocationBtn.style.display = (serverConfigured && !isStationaryMode) ? 'flex' : 'none';
     }
     elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
@@ -897,7 +920,6 @@ function updateUI(data) {
     let htmlContent = '';
 
     // Prepend Owner Card if data available
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     if (ownerLocation) {
         const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
         const timestamp = ownerLocation.timestamp || ownerLocation.tst;
@@ -1408,9 +1430,12 @@ function updateMapMarkers() {
     const cardHeader = document.createElement('div');
     cardHeader.className = 'map-card-header';
     cardHeader.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(titleText)}</span>
-            <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${secondsToRefresh}s)</span>
+        <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(titleText)}</span>
+                <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${secondsToRefresh}s)</span>
+            </div>
+            <div id="sharedExpiryCountdown" style="font-size: 0.75rem; color: var(--warning-color); display: none;"></div>
         </div>
         ${usersToShow.length > 1 ? chevron : ''}
     `;
@@ -1558,6 +1583,9 @@ function updateMapMarkers() {
         }
         isProgrammaticUpdate = false;
     }
+
+    // Update countdown immediately to prevent flickering
+    updateCountdown();
 }
 
 // Fallback Logic variables
