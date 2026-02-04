@@ -821,3 +821,10 @@ button.duration-btn.active {
     color: white !important;
     border-color: var(--accent-color) !important;
 }
+
+/* Force duration button active state (renamed to is-selected) */
+button.duration-btn.is-selected {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
+}

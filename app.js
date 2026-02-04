@@ -1913,16 +1913,20 @@ function setupEventListeners() {
     if (elements.durationBtns) {
         elements.durationBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                elements.durationBtns.forEach(b => b.classList.remove('active'));
-                // Use closest in case we add icons later, or just target
-                e.target.closest('button').classList.add('active');
+                // Remove class from all
+                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('is-selected'));
+                // Add to clicked
+                const target = e.target.closest('button');
+                if (target) {
+                    target.classList.add('is-selected');
+                }
             });
         });
     }
 
     if (elements.generateShareLinkBtn) {
         elements.generateShareLinkBtn.addEventListener('click', async () => {
-            const activeBtn = document.querySelector('.duration-btn.active');
+            const activeBtn = document.querySelector('.duration-btn.is-selected');
             const duration = activeBtn ? activeBtn.dataset.duration : 3600;
 
             const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
