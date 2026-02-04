@@ -85,7 +85,6 @@ let selectedMemberEmails = new Set();
 let showOwnerLocation = false;
 let ownerLocation = null;
 let ownerMarker = null;
-let currentMapMemberEmail = null; // Deprecated, but keeping for compatibility if needed, though we should switch to selectedMemberEmails logic
 let userMarker = null;
 let userLocation = null;
 let proximityEnabled = false;
@@ -666,7 +665,6 @@ function showDashboard() {
     elements.configView.classList.remove('active');
     elements.dashboardView.classList.add('active');
     elements.mapView.classList.remove('active');
-    currentMapMemberEmail = null;
 }
 
 function saveConfig() {
