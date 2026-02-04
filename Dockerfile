@@ -14,16 +14,15 @@ COPY server/server.js ./
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Setup Client
-# Ensure the target directory exists
-RUN mkdir -p /usr/share/nginx/html/familytrack/
-
-COPY index.html /usr/share/nginx/html/familytrack/
-COPY style.css /usr/share/nginx/html/familytrack/
-COPY app.js /usr/share/nginx/html/familytrack/
-COPY manifest.json /usr/share/nginx/html/familytrack/
-COPY sw.js /usr/share/nginx/html/familytrack/
-COPY icon.png /usr/share/nginx/html/familytrack/
-COPY style.json /usr/share/nginx/html/familytrack/
+# Copy files to root html directory
+WORKDIR /usr/share/nginx/html
+COPY index.html ./
+COPY style.css ./
+COPY app.js ./
+COPY manifest.json ./
+COPY sw.js ./
+COPY icon.png ./
+COPY style.json ./
 
 # Entrypoint
 COPY entrypoint.sh /entrypoint.sh
