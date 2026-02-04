@@ -28,7 +28,7 @@ const checkConfig = (req, res, next) => {
  * Body: { duration: number (seconds), email: string (optional), name: string (optional) }
  */
 app.post('/api/share', checkConfig, (req, res) => {
-    const { duration, email, name } = req.body;
+    const { duration, email, name, styleUrl } = req.body;
 
     // Default duration: 1 hour
     const expiresIn = duration || 3600;
@@ -36,6 +36,7 @@ app.post('/api/share', checkConfig, (req, res) => {
     const payload = {
         email: email || 'OWNER', // 'OWNER' implies the API key holder
         name: name || 'User',
+        styleUrl: styleUrl,
         created_at: Date.now()
     };
 
@@ -115,6 +116,10 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
         }
 
         if (locationData) {
+            // Include styleUrl from token if available
+            if (decoded.styleUrl) {
+                locationData.styleUrl = decoded.styleUrl;
+            }
             res.json(locationData);
         } else {
             res.status(404).json({ error: 'Location not found or outdated' });

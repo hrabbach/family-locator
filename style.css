@@ -807,3 +807,10 @@ input:checked+.slider:before {
     border-color: var(--text-primary);
     color: var(--text-primary);
 }
+
+/* Ensure button specificity */
+#shareModalBackdrop .duration-btn.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}

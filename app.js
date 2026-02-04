@@ -75,6 +75,7 @@ let currentEditingEmail = null;
 let isSharedMode = false;
 let shareToken = null;
 let sharedLocations = []; // Store shared members separately for merging
+let sharedStyleUrl = null; // Store style from token
 let serverConfigured = false;
 let html5QrCode = null;
 let map = null;
@@ -477,10 +478,6 @@ function initSharedMode(token) {
     isSharedMode = true;
     shareToken = token;
 
-    // Apply minimal config for Map
-    const urlParams = new URLSearchParams(window.location.search);
-    const style = urlParams.get('style');
-
     // Hide UI
     elements.configView.classList.remove('active');
     elements.dashboardView.classList.remove('active');
@@ -490,22 +487,16 @@ function initSharedMode(token) {
     requestWakeLock();
 
     // Setup Map Config Defaults if missing
+    // We do NOT set style here anymore, we wait for fetchSharedData
     if (!localStorage.getItem(CONFIG_KEY)) {
         // Set defaults for map engine
         const tempConfig = {
             mapEngine: 'maplibre',
-            mapStyleUrl: style || './style.json',
-            geocodeEnabled: true, // Enable geocode for better UX
+            mapStyleUrl: './style.json', // Will be overridden by sharedStyleUrl
+            geocodeEnabled: true,
             photonUrl: 'https://photon.komoot.io'
         };
-        // We don't save to localStorage to avoid polluting
-        // We need to patch get items or just put it in localStorage?
-        // Putting in localStorage is easiest but persistent.
-        // Let's put in localStorage but maybe mark it as temporary?
-        // Or just rely on standard flow.
-        if (!localStorage.getItem(CONFIG_KEY)) {
-             localStorage.setItem(CONFIG_KEY, JSON.stringify(tempConfig));
-        }
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(tempConfig));
     }
 
     // Start Polling
@@ -555,6 +546,18 @@ async function fetchSharedData() {
 
         // Resolve address
         data.address = resolveAddress(data);
+
+        // Handle Shared Style
+        if (data.styleUrl && data.styleUrl !== sharedStyleUrl) {
+            sharedStyleUrl = data.styleUrl;
+            // Force map reset/update to apply style
+            if (map) {
+                // If it's maplibre and we are in shared mode, we might want to apply the new style
+                // updateMapMarkers checks config.mapStyleUrl.
+                // We need updateMapMarkers to respect sharedStyleUrl.
+                updateMapMarkers();
+            }
+        }
 
         if (isSharedMode) {
             // View Only Mode: Replace everything
@@ -1062,7 +1065,8 @@ function showMap(email) {
 function updateMapMarkers() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     const useLeaflet = config.mapEngine === 'leaflet';
-    const targetStyleUrl = config.mapStyleUrl || './style.json';
+    // Use shared style if available and in shared mode, otherwise config
+    const targetStyleUrl = (isSharedMode && sharedStyleUrl) ? sharedStyleUrl : (config.mapStyleUrl || './style.json');
 
     // If switching engines or styles (for MapLibre), destroy previous map instance
     if (map) {
@@ -1172,7 +1176,7 @@ function updateMapMarkers() {
             const index = entry.index;
             const lat = member.latitude;
             const lng = member.longitude;
-            const displayName = names[email] || email;
+            const displayName = names[email] || member.name || email;
             const popupContent = `<b>${escapeHtml(displayName)}</b><br>${escapeHtml(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtml(member.address)}` : ''}`;
 
             if (useLeaflet) {
@@ -1486,17 +1490,19 @@ function updateMapMarkers() {
         recenterBtn.style.display = 'none';
     };
 
-    const closeBtn = document.createElement('button');
-    closeBtn.innerText = 'Close'; // Renamed to simple "Close"
-    closeBtn.className = 'edit-name-btn';
-    closeBtn.style.padding = '0.3rem 1rem';
-    closeBtn.style.fontSize = '0.8rem';
-    closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
-    closeBtn.style.color = 'var(--text-primary)';
-    closeBtn.onclick = closeMap;
-
     buttonsContainer.appendChild(recenterBtn);
-    buttonsContainer.appendChild(closeBtn);
+
+    if (!isSharedMode) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = 'Close'; // Renamed to simple "Close"
+        closeBtn.className = 'edit-name-btn';
+        closeBtn.style.padding = '0.3rem 1rem';
+        closeBtn.style.fontSize = '0.8rem';
+        closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
+        closeBtn.style.color = 'var(--text-primary)';
+        closeBtn.onclick = closeMap;
+        buttonsContainer.appendChild(closeBtn);
+    }
 
     cardFooter.appendChild(toggleContainer);
     cardFooter.appendChild(buttonsContainer);
@@ -1921,24 +1927,19 @@ function setupEventListeners() {
 
             const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
             const name = config.apiUserName || 'User';
+            const styleUrl = config.mapStyleUrl || './style.json';
 
             try {
                 const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/share';
                 const res = await fetch(apiPath, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ duration, name })
+                    body: JSON.stringify({ duration, name, styleUrl })
                 });
 
                 if (res.ok) {
                     const data = await res.json();
                     let link = `${window.location.origin}${window.location.pathname}?token=${data.token}`;
-
-                    // Append style URL if custom
-                    if (config.mapStyleUrl && config.mapStyleUrl !== './style.json') {
-                         link += `&style=${encodeURIComponent(config.mapStyleUrl)}`;
-                    }
-
                     elements.shareLinkInput.value = link;
                     elements.generatedLinkContainer.style.display = 'block';
                 } else {
