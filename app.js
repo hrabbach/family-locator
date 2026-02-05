@@ -549,9 +549,6 @@ async function fetchSharedData() {
             sharedStyleUrl = data.styleUrl;
             // Force map reset/update to apply style
             if (map) {
-                // If it's maplibre and we are in shared mode, we might want to apply the new style
-                // updateMapMarkers checks config.mapStyleUrl.
-                // We need updateMapMarkers to respect sharedStyleUrl.
                 updateMapMarkers();
             }
         }
