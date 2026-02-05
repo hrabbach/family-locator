@@ -1,6 +1,66 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 const CONFIG_KEY = 'family_tracker_config';
 const NAMES_KEY = 'family_tracker_names';
+
+// CDN Constants
+const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+const LEAFLET_CSS_SRI = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+const LEAFLET_JS_SRI = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+
+const MAPLIBRE_CSS = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+const MAPLIBRE_JS = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+
+let engineLoadPromise = null;
+let currentLoadedEngine = null;
+
+function loadCSS(href, integrity) {
+    if (document.querySelector(`link[href="${href}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    if (integrity) {
+        link.integrity = integrity;
+        link.crossOrigin = "";
+    }
+    document.head.appendChild(link);
+}
+
+function loadScript(src, integrity) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        if (integrity) {
+            script.integrity = integrity;
+            script.crossOrigin = "";
+        } else {
+            script.crossOrigin = "";
+        }
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+function loadMapEngine(engine) {
+    if (engineLoadPromise && currentLoadedEngine === engine) return engineLoadPromise;
+
+    currentLoadedEngine = engine;
+
+    if (engine === 'leaflet') {
+        loadCSS(LEAFLET_CSS, LEAFLET_CSS_SRI);
+        engineLoadPromise = loadScript(LEAFLET_JS, LEAFLET_JS_SRI);
+    } else {
+        loadCSS(MAPLIBRE_CSS);
+        engineLoadPromise = loadScript(MAPLIBRE_JS);
+    }
+    return engineLoadPromise;
+}
+
 let refreshInterval;
 let countdownInterval;
 let secondsToRefresh = 10;
@@ -377,6 +437,11 @@ async function copyConfigUrl() {
 function init() {
     registerServiceWorker();
     setupEventListeners();
+
+    // Preload Map Engine based on existing config or default
+    const preConfig = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const preEngine = (preConfig && preConfig.mapEngine) ? preConfig.mapEngine : 'maplibre';
+    loadMapEngine(preEngine);
 
     // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -1079,9 +1144,17 @@ function showMap(email) {
     fetchData();
 }
 
-function updateMapMarkers() {
+async function updateMapMarkers() {
     const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
     const useLeaflet = config.mapEngine === 'leaflet';
+    const requiredEngine = useLeaflet ? 'leaflet' : 'maplibre';
+
+    // Ensure engine is loaded before doing anything
+    await loadMapEngine(requiredEngine);
+
+    // Check if view is still active (user might have navigated away during load)
+    if (!elements.mapView.classList.contains('active')) return;
+
     // Use shared style if available and in shared mode, otherwise config
     const targetStyleUrl = (isSharedMode && sharedStyleUrl) ? sharedStyleUrl : (config.mapStyleUrl || './style.json');
 
