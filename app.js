@@ -164,7 +164,6 @@ let proximityEnabled = false;
 let watchId = null;
 let lastLocations = [];
 let isAutoCenterEnabled = true;
-let isProgrammaticUpdate = false;
 let isMapOverlayCollapsed = false;
 let lastKnownAddresses = {}; // email -> address
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
@@ -1227,8 +1226,8 @@ async function updateMapMarkers() {
                 const btn = document.getElementById('dynamicRecenterBtn');
                 if (btn) btn.style.display = 'block';
             });
-            map.on('zoomstart', () => {
-                if (!isProgrammaticUpdate) {
+            map.on('zoomstart', (e) => {
+                if (e && e.originalEvent) {
                     isAutoCenterEnabled = false;
                     const btn = document.getElementById('dynamicRecenterBtn');
                     if (btn) btn.style.display = 'block';
@@ -1252,8 +1251,8 @@ async function updateMapMarkers() {
                 const btn = document.getElementById('dynamicRecenterBtn');
                 if (btn) btn.style.display = 'block';
             });
-            map.on('zoomstart', () => {
-                if (!isProgrammaticUpdate) {
+            map.on('zoomstart', (e) => {
+                if (e && e.originalEvent) {
                     isAutoCenterEnabled = false;
                     const btn = document.getElementById('dynamicRecenterBtn');
                     if (btn) btn.style.display = 'block';
@@ -1662,8 +1661,6 @@ async function updateMapMarkers() {
         const paddingBottom = isMobile ? 300 : 50;
         const paddingSide = isMobile ? 20 : 50;
 
-        isProgrammaticUpdate = true;
-
         if (useLeaflet) {
             // Leaflet FitBounds
             map.fitBounds(bounds, {
@@ -1683,7 +1680,6 @@ async function updateMapMarkers() {
                 maxZoom: 18
             });
         }
-        isProgrammaticUpdate = false;
     }
 
     // Update countdown immediately to prevent flickering
