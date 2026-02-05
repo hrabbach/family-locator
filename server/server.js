@@ -91,10 +91,10 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
         if (targetEmail === 'OWNER') {
             // Fetch Owner Location (Last point)
             // Using logic similar to app.js fetchOwnerLocation
-            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const startAt = '2000-01-01';
             const params = new URLSearchParams({
                 api_key: DAWARICH_API_KEY,
-                start_at: yesterday,
+                start_at: startAt,
                 per_page: 1,
                 order: 'desc'
             });
