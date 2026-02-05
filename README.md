@@ -95,6 +95,8 @@ docker run -d \
   -e DAWARICH_API_URL="https://your-dawarich-instance.com" \
   -e DAWARICH_API_KEY="your-api-key" \
   -e JWT_SECRET="optional-random-secret-string" \
+  -e PHOTON_API_URL="https://photon.komoot.io" \
+  -e PHOTON_API_KEY="" \
   --name family-locator \
   hrabbach/family-locator:latest
 ```
@@ -102,6 +104,8 @@ docker run -d \
 -   `DAWARICH_API_URL`: The full URL to your Dawarich instance.
 -   `DAWARICH_API_KEY`: A valid API key for fetching location data.
 -   `JWT_SECRET`: (Optional) A secret string used to sign sharing tokens. If not provided, a random one is generated on startup (invalidating previous links on restart).
+-   `PHOTON_API_URL`: (Optional) The URL for the Photon Geocoding API (defaults to `https://photon.komoot.io`).
+-   `PHOTON_API_KEY`: (Optional) API key for the Photon service if required.
 
 The application will be available at `http://localhost:8080`.
 

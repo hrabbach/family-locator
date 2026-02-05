@@ -233,6 +233,20 @@ function getCoordinateKey(lat, lon) {
 }
 
 function resolveAddress(member) {
+    // If member already has an address (e.g. from server), use it.
+    if (member.address && member.address !== "Unknown Location") {
+        const lat = member.latitude || member.lat;
+        const lon = member.longitude || member.lon;
+        if (lat && lon) {
+             const key = getCoordinateKey(lat, lon);
+             if (!addressCache.has(key)) {
+                 addressCache.set(key, member.address);
+                 lastKnownAddresses[member.email || 'OWNER'] = member.address;
+             }
+        }
+        return member.address;
+    }
+
     const config = getConfig();
     if (!config || !config.geocodeEnabled) return null;
 

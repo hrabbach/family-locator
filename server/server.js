@@ -11,12 +11,18 @@ app.use(cors());
 const PORT = process.env.PORT || 3000;
 const DAWARICH_API_URL = process.env.DAWARICH_API_URL;
 const DAWARICH_API_KEY = process.env.DAWARICH_API_KEY;
+const PHOTON_API_URL = process.env.PHOTON_API_URL || 'https://photon.komoot.io';
+const PHOTON_API_KEY = process.env.PHOTON_API_KEY || '';
+
 // If no secret provided, generate one (invalidates tokens on restart, which is fine for simple setups)
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 // Simple in-memory cache
 const locationCache = new Map();
 const CACHE_TTL = 10 * 1000; // 10 seconds
+
+// Address cache (keyed by rounded lat,lon)
+const addressCache = new Map();
 
 // Periodic cleanup of expired cache entries (every 60s)
 setInterval(() => {
@@ -26,7 +32,58 @@ setInterval(() => {
             locationCache.delete(key);
         }
     }
+    // Limit address cache size if needed, but for now it's simple
+    if (addressCache.size > 1000) addressCache.clear();
 }, 60 * 1000);
+
+// Helper to resolve address
+const resolveAddress = async (lat, lon) => {
+    if (!lat || !lon) return null;
+
+    // Round to 4 decimal places (~11m precision) for caching
+    const key = `${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`;
+
+    if (addressCache.has(key)) {
+        return addressCache.get(key);
+    }
+
+    try {
+        // Construct URL
+        const url = new URL(`${PHOTON_API_URL}/reverse`);
+        url.searchParams.append('lat', lat);
+        url.searchParams.append('lon', lon);
+        if (PHOTON_API_KEY) {
+            url.searchParams.append('api_key', PHOTON_API_KEY);
+        }
+
+        const response = await fetch(url.toString());
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+            const props = data.features[0].properties;
+            const parts = [];
+
+            // Build address string similar to frontend logic
+            if (props.name) parts.push(props.name);
+            if (props.housenumber && props.street) parts.push(`${props.housenumber} ${props.street}`);
+            else if (props.street) parts.push(props.street);
+
+            if (props.city) parts.push(props.city);
+            else if (props.town) parts.push(props.town);
+            else if (props.village) parts.push(props.village);
+
+            if (props.country) parts.push(props.country);
+
+            const address = parts.join(', ');
+            addressCache.set(key, address);
+            return address;
+        }
+    } catch (err) {
+        console.error('Address resolution error:', err.message);
+    }
+    return null;
+};
 
 // Middleware to check configuration
 const checkConfig = (req, res, next) => {
@@ -138,6 +195,13 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
         }
 
         if (locationData) {
+            // Resolve address if missing
+            if (!locationData.address && locationData.latitude && locationData.longitude) {
+                locationData.address = await resolveAddress(locationData.latitude, locationData.longitude);
+            } else if (!locationData.address && locationData.lat && locationData.lon) {
+                locationData.address = await resolveAddress(locationData.lat, locationData.lon);
+            }
+
             // Include styleUrl from token if available
             if (decoded.styleUrl) {
                 locationData.styleUrl = decoded.styleUrl;
