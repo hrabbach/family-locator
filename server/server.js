@@ -14,6 +14,20 @@ const DAWARICH_API_KEY = process.env.DAWARICH_API_KEY;
 // If no secret provided, generate one (invalidates tokens on restart, which is fine for simple setups)
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
+// Simple in-memory cache
+const locationCache = new Map();
+const CACHE_TTL = 10 * 1000; // 10 seconds
+
+// Periodic cleanup of expired cache entries (every 60s)
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of locationCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+            locationCache.delete(key);
+        }
+    }
+}, 60 * 1000);
+
 // Middleware to check configuration
 const checkConfig = (req, res, next) => {
     if (!DAWARICH_API_URL || !DAWARICH_API_KEY) {
@@ -56,6 +70,14 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
 
     if (!token) {
         return res.status(401).json({ error: 'Missing token' });
+    }
+
+    // Check cache
+    if (locationCache.has(token)) {
+        const { data, timestamp } = locationCache.get(token);
+        if (Date.now() - timestamp < CACHE_TTL) {
+            return res.json(data);
+        }
     }
 
     try {
@@ -124,6 +146,13 @@ app.get('/api/shared/location', checkConfig, async (req, res) => {
             if (decoded.exp) {
                 locationData.expires_at = decoded.exp;
             }
+
+            // Store in cache
+            locationCache.set(token, {
+                data: locationData,
+                timestamp: Date.now()
+            });
+
             res.json(locationData);
         } else {
             res.status(404).json({ error: 'Location not found or outdated' });
