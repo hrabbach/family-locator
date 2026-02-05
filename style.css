@@ -803,6 +803,7 @@ input:checked+.slider:before {
     border-color: var(--accent-color);
 }
 
+.duration-btn.active,
 .duration-btn:hover:not(.active) {
     border-color: var(--text-primary);
     color: var(--text-primary);
@@ -827,4 +828,32 @@ button.duration-btn.is-selected {
     background-color: var(--success-color) !important;
     color: white !important;
     border-color: var(--success-color) !important;
+}
+
+/* Fix for MapLibre/Leaflet Controls conflicting with global button styles */
+.maplibregl-popup-close-button,
+.leaflet-popup-close-button {
+    padding: 0 !important;
+    color: inherit !important;
+    background: transparent !important;
+    border: none !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Also fix zoom controls if they are buttons */
+.maplibregl-ctrl-group button,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    padding: 0 !important;
+    background-color: transparent !important;
+    color: black !important; /* Icons usually black/dark */
+}
+
+/* Reset hover effects */
+.maplibregl-popup-close-button:hover,
+.maplibregl-ctrl-group button:hover {
+    transform: none !important;
+    opacity: 1 !important;
+    background-color: rgba(0,0,0,0.05) !important;
 }
