@@ -63,12 +63,13 @@ The tool uses the following endpoint:
 - **v2.0.1**: Optimized mobile layout to hide coordinates when addresses are present.
 - **v2.0.0**: Added Reverse Geocoding support and address caching.
 - **v2.8.2**: Implemented geocoding request queue to resolve N+1 API issue and respect rate limits.
+- **v2.8.5**: Validated and expanded API time range parameters (`start_at`) to ensure last known location is retrieved even if old.
 
 ### Recent Optimizations (by Jules)
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
 
-### Current Version: v2.8.2
+### Current Version: v2.8.5
 
 

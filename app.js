@@ -964,17 +964,13 @@ async function fetchOwnerLocation(config) {
         // Fetch last 24 hours of points for the API key owner
         // We use a large window to ensure we get at least one point
         // and order by desc to get the latest.
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const today = new Date().toISOString().split('T')[0]; // Actually end_at expects date or datetime? Swagger says string, desc "End date".
-        // Let's try to just use valid params for /api/v1/points
-        // The swagger says `start_at` and `end_at`.
+        const startAt = '2000-01-01'; // Use a very old date to ensure we find the last point
 
         const params = new URLSearchParams({
             api_key: config.apiKey,
-            start_at: yesterday, // approximate
+            start_at: startAt,
             per_page: 1,
             order: 'desc'
-            // We might need to specify a wide range.
         });
 
         const response = await fetch(`${config.baseUrl}/api/v1/points?${params.toString()}`);
