@@ -1170,6 +1170,9 @@ function showMap(email) {
         selectedMemberEmails.add(email);
     }
 
+    // Always reset auto-center when showing map fresh
+    isAutoCenterEnabled = true;
+
     elements.mapView.classList.add('active');
     elements.dashboardView.classList.remove('active');
 
@@ -1874,6 +1877,7 @@ function closeMap() {
         map = null;
         memberMarkers = {};
         ownerMarker = null;
+        userMarker = null;
     }
 }
 
