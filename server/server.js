@@ -52,11 +52,13 @@ const resolveAddress = async (lat, lon) => {
         const url = new URL(`${PHOTON_API_URL}/reverse`);
         url.searchParams.append('lat', lat);
         url.searchParams.append('lon', lon);
+
+        const headers = {};
         if (PHOTON_API_KEY) {
-            url.searchParams.append('api_key', PHOTON_API_KEY);
+            headers['X-API-KEY'] = PHOTON_API_KEY;
         }
 
-        const response = await fetch(url.toString());
+        const response = await fetch(url.toString(), { headers });
         if (!response.ok) return null;
 
         const data = await response.json();
