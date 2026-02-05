@@ -168,6 +168,8 @@ let isProgrammaticUpdate = false;
 let isMapOverlayCollapsed = false;
 let lastKnownAddresses = {}; // email -> address
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
+const geocodeQueue = [];
+let isGeocoding = false;
 let wakeLock = null;
 
 const MEMBER_COLORS = [
@@ -255,20 +257,36 @@ function resolveAddress(member) {
     }
 
     // Cache miss or pending: return last known if available
-    fetchAddressFromApi(lat, lon, config);
+    enqueueGeocodeRequest(lat, lon, config);
     return lastKnownAddresses[email] || null;
 }
 
-async function fetchAddressFromApi(lat, lon, config) {
+function enqueueGeocodeRequest(lat, lon, config) {
     const key = getCoordinateKey(lat, lon);
-    // Double check to prevent duplicate in-flight requests if we had a way to track them,
-    // but here we just check if it's already resolved.
     if (addressCache.has(key)) return;
 
-    // Use a placeholder to prevent repeated fetches while one is in flight?
-    // For simplicity, we might skip this, but 10s refresh might trigger multiple.
-    // Let's set a temporary value.
     addressCache.set(key, null); // Pending
+    geocodeQueue.push({ lat, lon, config });
+    processGeocodeQueue();
+}
+
+async function processGeocodeQueue() {
+    if (isGeocoding) return;
+    isGeocoding = true;
+
+    while (geocodeQueue.length > 0) {
+        const task = geocodeQueue.shift();
+        await performGeocodeFetch(task.lat, task.lon, task.config);
+        if (geocodeQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
+        }
+    }
+    isGeocoding = false;
+}
+
+async function performGeocodeFetch(lat, lon, config) {
+    const key = getCoordinateKey(lat, lon);
+    // Note: addressCache.has(key) is true (null) because we set it in enqueue.
 
     try {
         const url = `${config.photonUrl}/reverse?lat=${lat}&lon=${lon}`;
