@@ -1,4 +1,5 @@
 /docker-compose.yml
 /sample.json
-/swagger.yamlnode_modules/
+/swagger.yaml
+node_modules/
 server/node_modules/
