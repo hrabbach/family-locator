@@ -2,6 +2,19 @@
 const CONFIG_KEY = 'family_tracker_config';
 const NAMES_KEY = 'family_tracker_names';
 
+let cachedConfig = null;
+
+function getConfig() {
+    if (cachedConfig) return cachedConfig;
+    const configStr = localStorage.getItem(CONFIG_KEY);
+    cachedConfig = configStr ? JSON.parse(configStr) : null;
+    return cachedConfig;
+}
+
+function invalidateConfig() {
+    cachedConfig = null;
+}
+
 // CDN Constants
 const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -219,7 +232,7 @@ function getCoordinateKey(lat, lon) {
 }
 
 function resolveAddress(member) {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     if (!config || !config.geocodeEnabled) return null;
 
     const lat = member.latitude || member.lat;
@@ -357,7 +370,7 @@ function processUrlConfiguration() {
     const namesParam = urlParams.get('names'); // email:name;email:name
 
     if (server || key || name || engine || mapStyle || geocode || photon || photonKey || awake || lat || lon) {
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        const config = getConfig() || {};
         if (server) config.baseUrl = server.replace(/\/$/, "");
         if (key) config.apiKey = key;
         if (name) config.apiUserName = name;
@@ -371,6 +384,7 @@ function processUrlConfiguration() {
         if (lon) config.fixedLon = lon;
 
         localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        invalidateConfig();
         updated = true;
     }
 
@@ -393,7 +407,7 @@ function processUrlConfiguration() {
 }
 
 function generateConfigUrl() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     const names = JSON.parse(localStorage.getItem(NAMES_KEY));
 
     if (!config) return null;
@@ -439,7 +453,7 @@ function init() {
     setupEventListeners();
 
     // Preload Map Engine based on existing config or default
-    const preConfig = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const preConfig = getConfig();
     const preEngine = (preConfig && preConfig.mapEngine) ? preConfig.mapEngine : 'maplibre';
     loadMapEngine(preEngine);
 
@@ -449,7 +463,7 @@ function init() {
 
     // Shared Mode Entry Point
     if (token) {
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+        const config = getConfig();
         if (config && config.baseUrl && config.apiKey) {
             // User has their own config, merge the shared location
             initMergeMode(token);
@@ -488,7 +502,7 @@ function init() {
         }
     }
 
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     if (config && config.baseUrl && config.apiKey) {
         showDashboard();
         startTracking();
@@ -516,7 +530,7 @@ async function checkServerStatus() {
             const data = await response.json();
             if (data.configured) {
                 serverConfigured = true;
-                const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+                const config = getConfig() || {};
                 const isStationaryMode = config.fixedLat && config.fixedLon;
                 if (elements.shareLocationBtn) {
                     elements.shareLocationBtn.style.display = (!isStationaryMode) ? 'flex' : 'none';
@@ -555,7 +569,7 @@ function initSharedMode(token) {
 
     // Setup Map Config Defaults if missing
     // We do NOT set style here anymore, we wait for fetchSharedData
-    if (!localStorage.getItem(CONFIG_KEY)) {
+    if (!getConfig()) {
         // Set defaults for map engine
         const tempConfig = {
             mapEngine: 'maplibre',
@@ -564,6 +578,7 @@ function initSharedMode(token) {
             photonUrl: 'https://photon.komoot.io'
         };
         localStorage.setItem(CONFIG_KEY, JSON.stringify(tempConfig));
+        invalidateConfig();
     }
 
     // Start Polling
@@ -669,7 +684,7 @@ async function fetchSharedData() {
 }
 
 function showConfig() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
     elements.baseUrlInput.value = config.baseUrl || '';
     elements.apiKeyInput.value = config.apiKey || '';
     elements.apiUserNameInput.value = config.apiUserName || '';
@@ -768,6 +783,7 @@ function saveConfig() {
     }
 
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    invalidateConfig();
     showDashboard();
     startTracking();
 }
@@ -820,7 +836,7 @@ function onScanSuccess(decodedText) {
 }
 
 function startTracking() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     if (config && config.keepAwakeEnabled) {
         requestWakeLock();
     }
@@ -872,7 +888,7 @@ function stopTracking() {
 }
 
 async function fetchData() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     if (!config) return;
 
     secondsToRefresh = 10; // Reset countdown on actual fetch
@@ -962,7 +978,7 @@ async function fetchOwnerLocation(config) {
 function updateUI(data) {
     if (!data.locations || !Array.isArray(data.locations)) return;
 
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
 
     // Check if we need to show the View Selected button
@@ -1116,7 +1132,7 @@ function getBatteryClass(level) {
 
 function editName(email) {
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
 
     currentEditingEmail = email;
     if (email === 'OWNER') {
@@ -1145,7 +1161,7 @@ function showMap(email) {
 }
 
 async function updateMapMarkers() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
     const useLeaflet = config.mapEngine === 'leaflet';
     const requiredEngine = useLeaflet ? 'leaflet' : 'maplibre';
 
@@ -1337,7 +1353,7 @@ async function updateMapMarkers() {
     if (shouldShowOwner) {
         const lat = ownerLocation.latitude || ownerLocation.lat;
         const lng = ownerLocation.longitude || ownerLocation.lon;
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        const config = getConfig() || {};
         const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
         const timestamp = ownerLocation.timestamp || ownerLocation.tst;
         const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown time';
@@ -1456,7 +1472,7 @@ async function updateMapMarkers() {
 
     // Owner (if enabled)
     if (shouldShowOwner) {
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        const config = getConfig() || {};
         usersToShow.push({
             name: config.apiUserName || "API Owner",
             email: "Owner",
@@ -1660,7 +1676,7 @@ async function updateMapMarkers() {
 let locationTimeout = null;
 
 function startUserTracking() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
 
     // 1. Stationary Mode Priority
     if (config && config.fixedLat && config.fixedLon) {
@@ -1727,7 +1743,7 @@ function startUserTracking() {
 
 function useOwnerLocationAsFallback() {
     // Check if we have owner location; if not fetch it
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    const config = getConfig();
     if (!config) return;
 
     // We can't use await here easily, so we handle promise
@@ -1756,7 +1772,7 @@ function useOwnerLocationAsFallback() {
 }
 
 function stopUserTracking() {
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
     const useLeaflet = config.mapEngine === 'leaflet';
 
     if (watchId) {
@@ -1774,7 +1790,7 @@ function stopUserTracking() {
 
 function updateUserMarker() {
     if (!map || !userLocation || !proximityEnabled) return;
-    const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+    const config = getConfig() || {};
     const useLeaflet = config.mapEngine === 'leaflet';
 
     if (useLeaflet) {
@@ -1852,9 +1868,10 @@ function saveModalName() {
 
     if (currentEditingEmail === 'OWNER') {
         // Update Config
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+        const config = getConfig() || {};
         config.apiUserName = newName;
         localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        invalidateConfig();
         // Update input in config view too if user goes back
         elements.apiUserNameInput.value = newName;
     } else {
@@ -1876,7 +1893,7 @@ function saveModalName() {
         // If in dashboard, simple fetch to redraw
         // Or clearer: just call updateUI if we had data? 
         // We have 'lastLocations' and 'ownerLocation' in memory.
-        const config = JSON.parse(localStorage.getItem(CONFIG_KEY)); // refresh config
+        const config = getConfig(); // refresh config
         const data = { locations: lastLocations };
         // We need to re-render. FetchData does it.
         // Or just re-render list?
@@ -1921,6 +1938,11 @@ function setupEventListeners() {
     elements.stopScanBtn.addEventListener('click', stopScan);
     elements.shareConfigBtn.addEventListener('click', copyConfigUrl);
 
+    // Storage Event for Sync
+    window.addEventListener('storage', (e) => {
+        if (e.key === CONFIG_KEY) invalidateConfig();
+    });
+
     // Geocode Toggle
     elements.geocodeEnabled.addEventListener('change', (e) => {
         elements.geocodeSettings.style.display = e.target.checked ? 'block' : 'none';
@@ -1960,7 +1982,7 @@ function setupEventListeners() {
         if (document.hidden) {
             stopTracking();
         } else {
-            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const config = getConfig();
             if (config && config.baseUrl && config.apiKey) {
                 if (elements.dashboardView.classList.contains('active') || elements.mapView.classList.contains('active')) {
                     startTracking();
@@ -2025,7 +2047,7 @@ function setupEventListeners() {
             const activeBtn = document.querySelector('.duration-btn.is-selected');
             const duration = activeBtn ? activeBtn.dataset.duration : 3600;
 
-            const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+            const config = getConfig() || {};
             const name = config.apiUserName || 'User';
             const styleUrl = config.mapStyleUrl || './style.json';
 
