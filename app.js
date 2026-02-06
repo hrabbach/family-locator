@@ -1,9 +1,43 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
-const CONFIG_KEY = 'family_tracker_config';
-const NAMES_KEY = 'family_tracker_names';
+
+// ==========================================
+// MODULE IMPORTS - Gradual Migration
+// ==========================================
+// NOTE: Gradually migrating to ES6 modules. These imports will replace
+// local implementations as we verify each migration step.
+
+import {
+    escapeHtml,
+    formatRelativeTime as formatRelativeTimeModule,
+    getBatteryClass,
+    getMemberColor,
+    getMemberColorByIndex,
+    calculateDistance,
+    MEMBER_COLORS
+} from './js/utils.js';
+
+import {
+    getConfig as getConfigModule,
+    invalidateConfig as invalidateConfigModule,
+    processUrlConfiguration,
+    generateConfigUrl,
+    copyConfigUrl,
+    CONFIG_KEY,
+    NAMES_KEY
+} from './js/config.js';
+
+// ==========================================
+// LEGACY CODE - Being gradually replaced
+// ==========================================
+
+// MIGRATED: Now imported from config.js module
+// const CONFIG_KEY = 'family_tracker_config';
+// const NAMES_KEY = 'family_tracker_names';
 
 let cachedConfig = null;
 
+// MIGRATED: Now imported from config.js module
+// Use getConfigModule for new code, keeping legacy wrapper for now
 function getConfig() {
     if (cachedConfig) return cachedConfig;
     const configStr = localStorage.getItem(CONFIG_KEY);
@@ -11,6 +45,7 @@ function getConfig() {
     return cachedConfig;
 }
 
+// MIGRATED: Now imported from config.js module
 function invalidateConfig() {
     cachedConfig = null;
 }
@@ -172,6 +207,8 @@ let geocodeProcessing = false;
 const MAX_GEOCODE_QUEUE_SIZE = 50; // Prevent unbounded queue growth
 let wakeLock = null;
 
+// MIGRATED: Now imported from utils.js module
+/*
 const MEMBER_COLORS = [
     { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
     { name: 'red', hex: '#CB2B3E', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' },
@@ -198,6 +235,7 @@ function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
 }
+*/
 
 // Security: Input Validation Functions
 function sanitizeUrl(url) {
@@ -513,6 +551,8 @@ async function performGeocodeFetch(lat, lon, config) {
     }
 }
 
+// MIGRATED: Now imported from utils.js module
+/*
 function getMemberColorByIndex(index) {
     if (index < 0) return MEMBER_COLORS[0];
     return MEMBER_COLORS[index % MEMBER_COLORS.length];
@@ -523,7 +563,10 @@ function getMemberColor(email, locations) {
     const index = locations.findIndex(m => m.email === email);
     return getMemberColorByIndex(index);
 }
+*/
 
+// MIGRATED: Now imported from config.js module
+/* Commented out - using imported version
 function processUrlConfiguration() {
     const urlParams = new URLSearchParams(window.location.search);
     const bulkConfig = urlParams.get('config');
@@ -694,6 +737,7 @@ async function copyConfigUrl() {
         }, 2000);
     }
 }
+*/
 
 // Initialize
 function init() {
@@ -1561,6 +1605,7 @@ function toggleMemberSelection(checkbox, email) {
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
 }
 
+
 function showSingleMemberMap(email) {
     // If we click a specific name, we just show that one person?
     // User requested: "select more than one... shown on the map simultaneously".
@@ -1571,11 +1616,14 @@ function showSingleMemberMap(email) {
     showMap();
 }
 
-function getBatteryClass(level) {
-    if (level <= 20) return 'battery-low';
-    if (level <= 50) return 'battery-mid';
-    return 'battery-high';
+// MIGRATED: Now imported from utils.js module
+/*
+function getBatteryClass(battery) {
+    if (battery >= 50) return 'battery-good';
+    if (battery >= 20) return 'battery-medium';
+    return 'battery-low';
 }
+*/
 
 function editName(email) {
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
@@ -2324,6 +2372,8 @@ function updateProximityUI(memberLat, memberLng) {
     elements.distanceBadge.style.display = 'inline-block';
 }
 
+// MIGRATED: Now imported from utils.js module
+/*
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -2334,6 +2384,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
+*/
 
 function recenterMap() {
     isAutoCenterEnabled = true;
@@ -2403,6 +2454,8 @@ function closeModal() {
     currentEditingEmail = null;
 }
 
+// MIGRATED: Now imported from utils.js module as formatRelativeTimeModule
+/*
 function formatRelativeTime(timestamp) {
     // API timestamp is seconds since Unix epoch
     const date = new Date(timestamp * 1000);
@@ -2419,6 +2472,10 @@ function formatRelativeTime(timestamp) {
 
     return `${absTime} (${relative})`;
 }
+*/
+
+// For now, create an alias to maintain compatibility
+const formatRelativeTime = formatRelativeTimeModule;
 
 function setupEventListeners() {
     // Buttons
@@ -2431,7 +2488,7 @@ function setupEventListeners() {
     });
     elements.scanQrBtn.addEventListener('click', startScan);
     elements.stopScanBtn.addEventListener('click', stopScan);
-    elements.shareConfigBtn.addEventListener('click', copyConfigUrl);
+    elements.shareConfigBtn.addEventListener('click', () => copyConfigUrl(elements.shareStatus));
 
     // Storage Event for Sync
     window.addEventListener('storage', (e) => {
