@@ -1604,6 +1604,7 @@ function toggleMemberSelection(checkbox, email) {
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
 }
 
+
 function showSingleMemberMap(email) {
     // If we click a specific name, we just show that one person?
     // User requested: "select more than one... shown on the map simultaneously".
@@ -1614,11 +1615,14 @@ function showSingleMemberMap(email) {
     showMap();
 }
 
-function getBatteryClass(level) {
-    if (level <= 20) return 'battery-low';
-    if (level <= 50) return 'battery-mid';
-    return 'battery-high';
+// MIGRATED: Now imported from utils.js module
+/*
+function getBatteryClass(battery) {
+    if (battery >= 50) return 'battery-good';
+    if (battery >= 20) return 'battery-medium';
+    return 'battery-low';
 }
+*/
 
 function editName(email) {
     const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
