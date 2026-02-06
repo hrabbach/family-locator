@@ -426,8 +426,8 @@ async function fetchWithRetry(url, options = {}, maxRetries = 3) {
 
 
 async function processGeocodeQueue() {
-    if (isGeocoding) return;
-    isGeocoding = true;
+    if (geocodeProcessing) return;
+    geocodeProcessing = true;
 
     while (geocodeQueue.length > 0) {
         const task = geocodeQueue.shift();
@@ -436,7 +436,7 @@ async function processGeocodeQueue() {
             await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
         }
     }
-    isGeocoding = false;
+    geocodeProcessing = false;
 }
 
 async function performGeocodeFetch(lat, lon, config) {
