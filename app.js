@@ -19,7 +19,6 @@ import {
 import {
     getConfig as getConfigModule,
     invalidateConfig as invalidateConfigModule,
-    validateConfig,
     processUrlConfiguration,
     CONFIG_KEY,
     NAMES_KEY
