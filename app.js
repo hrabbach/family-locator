@@ -1178,6 +1178,7 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
     if (nameSpan.innerText !== displayName) nameSpan.innerText = displayName;
 
     // Edit Btn
+    editBtn.setAttribute('data-action', 'edit-name');
     editBtn.setAttribute('data-email', email);
 
     // 4. Location
