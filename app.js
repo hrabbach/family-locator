@@ -393,7 +393,6 @@ function enqueueGeocodeRequest(lat, lon, config) {
 
     addressCache.set(key, null); // Mark as pending
     geocodeQueue.push({ lat: latitude, lon: longitude, config });
-    console.log(`Enqueued geocode request for ${latitude.toFixed(4)}, ${longitude.toFixed(4)} - Queue size: ${geocodeQueue.length}`);
     processGeocodeQueue();
 }
 
@@ -434,8 +433,6 @@ async function processGeocodeQueue() {
     if (geocodeProcessing) return;
     geocodeProcessing = true;
 
-    console.log(`Processing geocode queue, ${geocodeQueue.length} items`);
-
     while (geocodeQueue.length > 0) {
         const task = geocodeQueue.shift();
         await performGeocodeFetch(task.lat, task.lon, task.config);
@@ -444,7 +441,6 @@ async function processGeocodeQueue() {
         }
     }
     geocodeProcessing = false;
-    console.log('Geocode queue processing complete');
 
     // Re-resolve addresses now that cache is updated
     // This will populate lastKnownAddresses with the newly geocoded values
