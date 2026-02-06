@@ -440,13 +440,23 @@ async function processGeocodeQueue() {
         const task = geocodeQueue.shift();
         await performGeocodeFetch(task.lat, task.lon, task.config);
         if (geocodeQueue.length > 0) {
-            await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
         }
     }
     geocodeProcessing = false;
     console.log('Geocode queue processing complete');
 
-    // Update UI after geocoding completes so addresses appear
+    // Re-resolve addresses now that cache is updated
+    // This will populate lastKnownAddresses with the newly geocoded values
+    if (lastLocations && lastLocations.length > 0) {
+        lastLocations.forEach(m => {
+            m.address = resolveAddress(m);
+        });
+    }
+    if (ownerLocation) {
+        ownerLocation.address = resolveAddress(ownerLocation);
+    }
+
+    // Update UI to show the new addresses
     updateUI({ locations: lastLocations });
 }
 
