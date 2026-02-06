@@ -98,6 +98,7 @@ docker run -d \
   -e DAWARICH_API_URL="https://dawarich.example.com" \
   -e DAWARICH_API_KEY="your-dawarich-api-key-here" \
   -e JWT_SECRET="your-random-secret-for-signing-tokens" \
+  -e CORS_ORIGINS="*" \
   -e PHOTON_API_URL="https://photon.komoot.io" \
   -e PHOTON_API_KEY="" \
   --name family-locator \
@@ -119,6 +120,7 @@ services:
       DAWARICH_API_URL: "https://your-dawarich-instance.com"
       DAWARICH_API_KEY: "your-api-key"
       JWT_SECRET: "optional-random-secret-string"
+      CORS_ORIGINS: "*"
       PHOTON_API_URL: "https://photon.komoot.io"
       PHOTON_API_KEY: ""
     restart: unless-stopped
@@ -242,6 +244,7 @@ docker run -d \
   -e DAWARICH_API_URL="https://dawarich.myserver.com" \
   -e DAWARICH_API_KEY="${DAWARICH_API_KEY}" \
   -e JWT_SECRET="${JWT_SECRET}" \
+  -e CORS_ORIGINS="https://myapp.com,https://admin.myapp.com" \
   -e PHOTON_API_URL="https://photon.komoot.io" \
   --name family-locator \
   --restart unless-stopped \
