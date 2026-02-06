@@ -2371,6 +2371,8 @@ function updateProximityUI(memberLat, memberLng) {
     elements.distanceBadge.style.display = 'inline-block';
 }
 
+// MIGRATED: Now imported from utils.js module
+/*
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -2381,6 +2383,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
+*/
 
 function recenterMap() {
     isAutoCenterEnabled = true;
