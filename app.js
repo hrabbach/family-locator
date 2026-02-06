@@ -1020,113 +1020,232 @@ function updateUI(data) {
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
     elements.viewSelectedBtn.onclick = () => showMap();
 
-    let htmlContent = '';
+    const container = elements.membersList;
+    const existingNodes = new Map();
 
-    // Prepend Owner Card if data available
+    // Index existing elements by email
+    Array.from(container.children).forEach(child => {
+        const email = child.getAttribute('data-member-email');
+        if (email) existingNodes.set(email, child);
+    });
+
+    const newOrder = [];
+
+    // 1. Handle Owner
     if (ownerLocation) {
-        const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
-        const timestamp = ownerLocation.timestamp || ownerLocation.tst;
-        const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown';
-        const batt = ownerLocation.battery || ownerLocation.batt || '?';
-        const batteryClass = getBatteryClass(batt);
-        const lat = parseFloat(ownerLocation.latitude || ownerLocation.lat).toFixed(5);
-        const lon = parseFloat(ownerLocation.longitude || ownerLocation.lon).toFixed(5);
-        const isOwnerSelected = selectedMemberEmails.has('OWNER');
-        const isStationaryMode = config.fixedLat && config.fixedLon;
-
-        // Distance logic (Only in Stationary Mode)
-        let ownerDistanceHtml = '';
-        if (isStationaryMode && userLocation) {
-             const dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
-             ownerDistanceHtml = `<div class="member-distance">${dist.toFixed(2)} km away</div>`;
+        const email = 'OWNER';
+        let card = existingNodes.get(email);
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'member-card owner-card';
+            card.setAttribute('data-member-email', email);
         }
-
-        // Checkbox only in Stationary Mode
-        const checkboxHtml = isStationaryMode ?
-            `<input type="checkbox" class="member-checkbox" ${isOwnerSelected ? 'checked' : ''} data-action="toggle-selection" data-email="OWNER">`
-            : `<!-- Checkbox hidden in normal mode -->`;
-
-        // Clickable name only in Stationary Mode
-        const nameHtml = isStationaryMode ?
-            `<span class="member-display-name" data-action="show-single-map" data-email="OWNER" style="color: #ffd700; cursor: pointer; text-decoration: underline;">${escapeHtml(ownerName)}</span>`
-            : `<span class="member-display-name" style="color: #ffd700;">${escapeHtml(ownerName)}</span>`;
-
-        const ownerCard = `
-            <div class="member-card owner-card">
-                 <div class="member-checkbox-container">
-                    ${checkboxHtml}
-                </div>
-                <div class="avatar" style="background: #ffd700; color: #333;">${escapeHtml(ownerName.charAt(0).toUpperCase())}</div>
-                <div class="member-info">
-                    <div class="member-email">
-                        ${nameHtml}
-                         <button class="edit-name-btn" data-action="edit-name" data-email="OWNER">Edit</button>
-                    </div>
-                    <div class="member-location ${ownerLocation.address ? 'has-address' : ''}">
-                        <span class="member-coords">Lat: ${lat}, Lon: ${lon}</span>
-                        ${ownerLocation.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(ownerLocation.address)}</div>` : ''}
-                        ${ownerDistanceHtml}
-                    </div>
-                </div>
-                <div class="member-meta">
-                    <div class="battery ${batteryClass}">
-                        <span>${batt}%</span>
-                        <small>${escapeHtml(ownerLocation.battery_status || 'unplugged')}</small>
-                    </div>
-                    <div class="timestamp" style="font-size: 0.7rem;">${escapeHtml(timeStr)}</div>
-                </div>
-            </div>
-         `;
-        htmlContent += ownerCard;
+        updateMemberCardContent(card, ownerLocation, config, names, true, -1);
+        newOrder.push(card);
+        existingNodes.delete(email);
     }
 
-    htmlContent += data.locations.map((member, index) => {
-        const batteryClass = getBatteryClass(member.battery);
-        const timeStr = formatRelativeTime(member.timestamp);
-        // Use name from object if available (for shared users), fallback to names map, then email
-        const displayName = names[member.email] || member.name || member.email;
-        const isDefault = displayName === member.email;
-        const isSelected = selectedMemberEmails.has(member.email);
-
-        // Calculate distance if user location is available
-        let distanceHtml = '';
-        if (userLocation) {
-            const dist = calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude);
-            distanceHtml = `<div class="member-distance">${dist.toFixed(2)} km away</div>`;
+    // 2. Handle Members
+    data.locations.forEach((member, index) => {
+        const email = member.email;
+        let card = existingNodes.get(email);
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'member-card';
+            card.setAttribute('data-member-email', email);
         }
+        updateMemberCardContent(card, member, config, names, false, index);
+        newOrder.push(card);
+        existingNodes.delete(email);
+    });
 
-        return `
-            <div class="member-card">
-                 <div class="member-checkbox-container">
-                    <input type="checkbox" class="member-checkbox" 
-                        ${isSelected ? 'checked' : ''} 
-                        data-action="toggle-selection" data-email="${escapeHtml(member.email)}"
-                    >
+    // 3. Reorder/Append
+    newOrder.forEach(card => {
+        container.appendChild(card);
+    });
+
+    // 4. Remove leftovers
+    existingNodes.forEach(card => {
+        card.remove();
+    });
+}
+
+function updateMemberCardContent(card, member, config, names, isOwner, index) {
+    const email = isOwner ? 'OWNER' : member.email;
+    const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
+
+    // Normalize data
+    const lat = parseFloat(member.latitude || member.lat).toFixed(5);
+    const lon = parseFloat(member.longitude || member.lon).toFixed(5);
+    const batt = member.battery || member.batt || '?';
+    const timestamp = member.timestamp || member.tst;
+
+    // Derived values
+    const batteryClass = getBatteryClass(batt);
+    const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown';
+
+    let displayName = ownerName;
+    if (!isOwner) {
+        displayName = names[member.email] || member.name || member.email;
+    }
+
+    const isSelected = selectedMemberEmails.has(email);
+    const isStationaryMode = config.fixedLat && config.fixedLon;
+
+    // Check if card has content (if it's new)
+    if (!card.hasChildNodes()) {
+         card.innerHTML = `
+             <div class="member-checkbox-container"></div>
+             <div class="avatar"></div>
+             <div class="member-info">
+                <div class="member-email">
+                    <span class="member-display-name"></span>
+                    <button class="edit-name-btn">Edit</button>
                 </div>
-                <div class="avatar" style="background: ${getMemberColorByIndex(index).hex}; color: white;">${escapeHtml(member.email_initial)}</div>
-                <div class="member-info">
-                    <div class="member-email">
-                        <span class="member-display-name" data-action="show-single-map" data-email="${escapeHtml(member.email)}" style="cursor: pointer; text-decoration: underline;">${escapeHtml(displayName)}</span>
-                        <button class="edit-name-btn" data-action="edit-name" data-email="${escapeHtml(member.email)}">Edit</button>
-                    </div>
-                    <div class="member-location ${member.address ? 'has-address' : ''}">
-                        <span class="member-coords">Lat: ${member.latitude.toFixed(5)}, Lon: ${member.longitude.toFixed(5)}</span>
-                        ${member.address ? `<div class="member-address" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${escapeHtml(member.address)}</div>` : ''}
-                        ${distanceHtml}
-                    </div>
-                </div>
-                <div class="member-meta">
-                    <div class="battery ${batteryClass}">
-                        <span>${member.battery}%</span>
-                        <small>${escapeHtml(member.battery_status)}</small>
-                    </div>
-                    <div class="timestamp" style="font-size: 0.7rem;">${escapeHtml(timeStr)}</div>
+                <div class="member-location">
+                    <span class="member-coords"></span>
                 </div>
             </div>
-        `;
-    }).join('');
+            <div class="member-meta">
+                <div class="battery">
+                    <span></span>
+                    <small></small>
+                </div>
+                <div class="timestamp" style="font-size: 0.7rem;"></div>
+            </div>
+         `;
+    }
 
-    elements.membersList.innerHTML = htmlContent;
+    const checkboxContainer = card.querySelector('.member-checkbox-container');
+    const avatar = card.querySelector('.avatar');
+    const nameSpan = card.querySelector('.member-display-name');
+    const editBtn = card.querySelector('.edit-name-btn');
+    const locationDiv = card.querySelector('.member-location');
+    const coordsSpan = card.querySelector('.member-coords');
+    const batteryDiv = card.querySelector('.battery');
+    const timeDiv = card.querySelector('.timestamp');
+
+    // 1. Checkbox
+    let shouldShowCheckbox = true;
+    if (isOwner && !isStationaryMode) shouldShowCheckbox = false;
+
+    let checkbox = checkboxContainer.querySelector('input');
+    if (shouldShowCheckbox) {
+        if (!checkbox) {
+            checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'member-checkbox';
+            checkbox.setAttribute('data-action', 'toggle-selection');
+            checkboxContainer.appendChild(checkbox);
+        }
+        checkbox.setAttribute('data-email', email);
+        checkbox.checked = isSelected;
+    } else {
+        if (checkbox) checkbox.remove();
+    }
+
+    // 2. Avatar
+    let avatarStyle = '';
+    let avatarContent = '';
+    if (isOwner) {
+        avatarStyle = 'background: #ffd700; color: #333;';
+        avatarContent = ownerName.charAt(0).toUpperCase();
+    } else {
+        avatarStyle = `background: ${getMemberColorByIndex(index).hex}; color: white;`;
+        avatarContent = member.email_initial || '';
+    }
+    if (avatar.getAttribute('style') !== avatarStyle) avatar.setAttribute('style', avatarStyle);
+    if (avatar.innerText !== avatarContent) avatar.innerText = avatarContent;
+
+    // 3. Name
+    if (isOwner && isStationaryMode) {
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.style.textDecoration = 'underline';
+        nameSpan.style.color = '#ffd700';
+        nameSpan.setAttribute('data-action', 'show-single-map');
+    } else if (isOwner) {
+        nameSpan.style.cursor = 'default';
+        nameSpan.style.textDecoration = 'none';
+        nameSpan.style.color = '#ffd700';
+        nameSpan.removeAttribute('data-action');
+    } else {
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.style.textDecoration = 'underline';
+        nameSpan.style.color = '';
+        nameSpan.setAttribute('data-action', 'show-single-map');
+    }
+    nameSpan.setAttribute('data-email', email);
+    if (nameSpan.innerText !== displayName) nameSpan.innerText = displayName;
+
+    // Edit Btn
+    editBtn.setAttribute('data-action', 'edit-name');
+    editBtn.setAttribute('data-email', email);
+
+    // 4. Location
+    const coordsText = `Lat: ${lat}, Lon: ${lon}`;
+    if (coordsSpan.innerText !== coordsText) coordsSpan.innerText = coordsText;
+
+    // Address
+    let addrEl = locationDiv.querySelector('.member-address');
+    if (member.address) {
+        if (!addrEl) {
+            addrEl = document.createElement('div');
+            addrEl.className = 'member-address';
+            addrEl.style.fontSize = '0.8rem';
+            addrEl.style.color = 'var(--text-secondary)';
+            addrEl.style.marginTop = '0.2rem';
+            locationDiv.insertBefore(addrEl, locationDiv.children[1]);
+        }
+        if (addrEl.innerText !== member.address) addrEl.innerText = member.address;
+        locationDiv.classList.add('has-address');
+    } else {
+        if (addrEl) addrEl.remove();
+        locationDiv.classList.remove('has-address');
+    }
+
+    // Distance
+    let distEl = locationDiv.querySelector('.member-distance');
+    let distText = null;
+    if (userLocation) {
+        let dist = 0;
+        let show = false;
+        if (isOwner) {
+            if (isStationaryMode) {
+                 dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
+                 show = true;
+            }
+        } else {
+             dist = calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude);
+             show = true;
+        }
+
+        if (show) {
+            distText = `${dist.toFixed(2)} km away`;
+        }
+    }
+
+    if (distText) {
+        if (!distEl) {
+            distEl = document.createElement('div');
+            distEl.className = 'member-distance';
+            locationDiv.appendChild(distEl);
+        }
+        if (distEl.innerText !== distText) distEl.innerText = distText;
+    } else {
+        if (distEl) distEl.remove();
+    }
+
+    // 5. Meta
+    batteryDiv.className = `battery ${batteryClass}`;
+
+    const battSpan = batteryDiv.querySelector('span');
+    if (battSpan.innerText !== `${batt}%`) battSpan.innerText = `${batt}%`;
+
+    const battSmall = batteryDiv.querySelector('small');
+    const batteryStatus = member.battery_status || (isOwner ? 'unplugged' : '');
+    if (battSmall.innerText !== batteryStatus) battSmall.innerText = batteryStatus;
+
+    if (timeDiv.innerText !== timeStr) timeDiv.innerText = timeStr;
 }
 
 function toggleMemberSelection(checkbox, email) {
