@@ -389,6 +389,7 @@ function enqueueGeocodeRequest(lat, lon, config) {
 
     addressCache.set(key, null); // Mark as pending
     geocodeQueue.push({ lat, lon, config });
+    console.log(`Enqueued geocode request for ${lat.toFixed(4)}, ${lon.toFixed(4)} - Queue size: ${geocodeQueue.length}`);
     processGeocodeQueue();
 }
 
@@ -429,6 +430,8 @@ async function processGeocodeQueue() {
     if (geocodeProcessing) return;
     geocodeProcessing = true;
 
+    console.log(`Processing geocode queue, ${geocodeQueue.length} items`);
+
     while (geocodeQueue.length > 0) {
         const task = geocodeQueue.shift();
         await performGeocodeFetch(task.lat, task.lon, task.config);
@@ -437,6 +440,7 @@ async function processGeocodeQueue() {
         }
     }
     geocodeProcessing = false;
+    console.log('Geocode queue processing complete');
 }
 
 async function performGeocodeFetch(lat, lon, config) {
