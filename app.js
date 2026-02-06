@@ -365,7 +365,11 @@ function resolveAddress(member) {
 }
 
 function enqueueGeocodeRequest(lat, lon, config) {
-    const key = getCoordinateKey(lat, lon);
+    // Ensure lat/lon are numbers
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+
+    const key = getCoordinateKey(latitude, longitude);
 
     // Already cached
     if (addressCache.has(key)) {
@@ -388,8 +392,8 @@ function enqueueGeocodeRequest(lat, lon, config) {
     }
 
     addressCache.set(key, null); // Mark as pending
-    geocodeQueue.push({ lat, lon, config });
-    console.log(`Enqueued geocode request for ${lat.toFixed(4)}, ${lon.toFixed(4)} - Queue size: ${geocodeQueue.length}`);
+    geocodeQueue.push({ lat: latitude, lon: longitude, config });
+    console.log(`Enqueued geocode request for ${latitude.toFixed(4)}, ${longitude.toFixed(4)} - Queue size: ${geocodeQueue.length}`);
     processGeocodeQueue();
 }
 
@@ -441,6 +445,9 @@ async function processGeocodeQueue() {
     }
     geocodeProcessing = false;
     console.log('Geocode queue processing complete');
+
+    // Update UI after geocoding completes so addresses appear
+    updateUI({ locations: lastLocations });
 }
 
 async function performGeocodeFetch(lat, lon, config) {
