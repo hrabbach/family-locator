@@ -440,6 +440,7 @@ async function processGeocodeQueue() {
         const task = geocodeQueue.shift();
         await performGeocodeFetch(task.lat, task.lon, task.config);
         if (geocodeQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
         }
     }
     geocodeProcessing = false;
@@ -1374,7 +1375,8 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
         lon: lon.toFixed(6),
         battery: batt,
         timestamp: timestamp,
-        name: displayName
+        name: displayName,
+        address: member.address || null  // Include address in comparison
     };
 
     const currentData = card.dataset.memberData ? JSON.parse(card.dataset.memberData) : {};
