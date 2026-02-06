@@ -19,6 +19,7 @@ WORKDIR /usr/share/nginx/html
 COPY index.html ./
 COPY style.css ./
 COPY app.js ./
+COPY js/ ./js/
 COPY manifest.json ./
 COPY sw.js ./
 COPY icon.png ./
