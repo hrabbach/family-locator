@@ -20,6 +20,8 @@ import {
     getConfig as getConfigModule,
     invalidateConfig as invalidateConfigModule,
     processUrlConfiguration,
+    generateConfigUrl,
+    copyConfigUrl,
     CONFIG_KEY,
     NAMES_KEY
 } from './js/config.js';
@@ -2486,7 +2488,7 @@ function setupEventListeners() {
     });
     elements.scanQrBtn.addEventListener('click', startScan);
     elements.stopScanBtn.addEventListener('click', stopScan);
-    elements.shareConfigBtn.addEventListener('click', copyConfigUrl);
+    elements.shareConfigBtn.addEventListener('click', () => copyConfigUrl(elements.shareStatus));
 
     // Storage Event for Sync
     window.addEventListener('storage', (e) => {
