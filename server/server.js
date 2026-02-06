@@ -5,7 +5,26 @@ const cors = require('cors');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Security: Restrict CORS to allowed origins
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost', 'http://localhost:80'];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = `CORS policy: Origin ${origin} not allowed`;
+            console.warn(msg);
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true
+}));
 
 // Security: Rate limiting to prevent abuse
 const rateLimit = require('express-rate-limit');
@@ -175,16 +194,17 @@ app.get('/api/shared/location', locationLimiter, checkConfig, async (req, res) =
         return res.status(401).json({ error: 'Missing token' });
     }
 
-    // Check cache
-    if (locationCache.has(token)) {
-        const { data, timestamp } = locationCache.get(token);
-        if (Date.now() - timestamp < CACHE_TTL) {
-            return res.json(data);
-        }
-    }
-
     try {
+        // Security: Validate token BEFORE serving cache
         const decoded = jwt.verify(token, JWT_SECRET);
+
+        // Only check cache for valid tokens
+        if (locationCache.has(token)) {
+            const { data, timestamp } = locationCache.get(token);
+            if (Date.now() - timestamp < CACHE_TTL) {
+                return res.json(data);
+            }
+        }
         const targetEmail = decoded.email;
 
         // Fetch data from Dawarich

@@ -40,8 +40,52 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+
+    // Network-first for Dawarich API calls (location data changes frequently)
+    // Excludes /api/share and /api/shared/location (our own API)
+    if (url.pathname.includes('/api/v1/')) {
+        event.respondWith(
+            fetch(event.request)
+                .catch(error => {
+                    console.warn('API fetch failed, trying cache:', error);
+                    return caches.match(event.request);
+                })
+        );
+        return;
+    }
+
+    // Cache-first for Photon geocoding API (coordinates->address unlikely to change)
+    if (url.hostname.includes('photon') || url.hostname.includes('komoot.io')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then(response => {
+                    if (response) {
+                        return response;
+                    }
+                    return fetch(event.request).then(response => {
+                        // Cache successful geocoding responses
+                        if (response.ok) {
+                            const responseToCache = response.clone();
+                            caches.open(CACHE_NAME).then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+                        }
+                        return response;
+                    });
+                })
+        );
+        return;
+    }
+
+    // Cache-first for static assets (CSS, JS, images, etc.)
     event.respondWith(
         caches.match(event.request)
-            .then(response => response || fetch(event.request))
+            .then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request);
+            })
     );
 });

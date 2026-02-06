@@ -168,7 +168,8 @@ let isMapOverlayCollapsed = false;
 let lastKnownAddresses = {}; // email -> address
 const addressCache = new Map(); // Key: "lat,lon" (fixed prec), Value: address string
 const geocodeQueue = [];
-let isGeocoding = false;
+let geocodeProcessing = false;
+const MAX_GEOCODE_QUEUE_SIZE = 50; // Prevent unbounded queue growth
 let wakeLock = null;
 
 const MEMBER_COLORS = [
@@ -365,12 +366,64 @@ function resolveAddress(member) {
 
 function enqueueGeocodeRequest(lat, lon, config) {
     const key = getCoordinateKey(lat, lon);
-    if (addressCache.has(key)) return;
 
-    addressCache.set(key, null); // Pending
+    // Already cached
+    if (addressCache.has(key)) {
+        return;
+    }
+
+    // Check if already queued (deduplication)
+    const alreadyQueued = geocodeQueue.some(task =>
+        getCoordinateKey(task.lat, task.lon) === key
+    );
+    if (alreadyQueued) {
+        return;
+    }
+
+    // Limit queue size - drop oldest items when full
+    if (geocodeQueue.length >= MAX_GEOCODE_QUEUE_SIZE) {
+        const dropped = geocodeQueue.shift();
+        console.warn(`Geocode queue full (${MAX_GEOCODE_QUEUE_SIZE}), dropping oldest request for`,
+            dropped.lat.toFixed(4), dropped.lon.toFixed(4));
+    }
+
+    addressCache.set(key, null); // Mark as pending
     geocodeQueue.push({ lat, lon, config });
     processGeocodeQueue();
 }
+
+// Error Recovery: Retry failed fetches with exponential backoff
+async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await fetch(url, options);
+
+            if (!response.ok) {
+                // Only retry on server errors (5xx)
+                if (response.status >= 500 && i < maxRetries - 1) {
+                    const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+                    console.warn(`Request failed with ${response.status}, retrying in ${delay}ms (attempt ${i + 1}/${maxRetries})...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return response;
+        } catch (error) {
+            if (i === maxRetries - 1) {
+                // Final attempt failed
+                throw error;
+            }
+
+            // Network error or other exception - retry with backoff
+            const delay = Math.pow(2, i) * 1000;
+            console.warn(`Request failed (${error.message}), retrying in ${delay}ms (attempt ${i + 1}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
 
 async function processGeocodeQueue() {
     if (isGeocoding) return;
@@ -1140,7 +1193,7 @@ async function fetchData() {
         // but is a limitation of the current Dawarich API design. When Dawarich supports header-based
         // authentication (e.g., Authorization: Bearer <token>), this should be updated.
         // See: https://github.com/Freika/dawarich/issues for API enhancement requests.
-        const response = await fetch(`${config.baseUrl}/api/v1/families/locations?api_key=${config.apiKey}`);
+        const response = await fetchWithRetry(`${config.baseUrl}/api/v1/families/locations?api_key=${config.apiKey}`);
         if (!response.ok) throw new Error('API request failed');
 
         const data = await response.json();
@@ -1198,7 +1251,8 @@ async function fetchOwnerLocation(config) {
             order: 'desc'
         });
 
-        const response = await fetch(`${config.baseUrl}/api/v1/points?${params.toString()}`);
+        const url = `${config.baseUrl}/api/v1/points?${params.toString()}`;
+        const response = await fetchWithRetry(url);
         if (response.ok) {
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
@@ -1286,10 +1340,30 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
     const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
 
     // Normalize data
-    const lat = parseFloat(member.latitude || member.lat).toFixed(5);
-    const lon = parseFloat(member.longitude || member.lon).toFixed(5);
+    const lat = parseFloat(member.latitude || member.lat);
+    const lon = parseFloat(member.longitude || member.lon);
     const batt = member.battery || member.batt || '?';
     const timestamp = member.timestamp || member.tst;
+    const displayName = isOwner ? (config.apiUserName || '(You)') : (names[member.email] || member.name || member.email);
+
+    // Performance: Smart update checking - only update if data actually changed
+    const newData = {
+        lat: lat.toFixed(6),
+        lon: lon.toFixed(6),
+        battery: batt,
+        timestamp: timestamp,
+        name: displayName
+    };
+
+    const currentData = card.dataset.memberData ? JSON.parse(card.dataset.memberData) : {};
+
+    // Skip update if nothing changed
+    if (JSON.stringify(currentData) === JSON.stringify(newData)) {
+        return;
+    }
+
+    // Store new state for next comparison
+    card.dataset.memberData = JSON.stringify(newData);
 
     // Derived values
     const batteryClass = getBatteryClass(batt);
@@ -1518,6 +1592,53 @@ function showMap(email) {
 
     // Initial fetch to get member data for map
     fetchData();
+}
+
+// Memory Management: Clean up map markers to prevent memory leaks
+function cleanupMapMarkers() {
+    const config = getConfig() || {};
+    const useLeaflet = config.mapEngine === 'leaflet';
+
+    // Clear all member markers
+    for (const [email, marker] of Object.entries(memberMarkers)) {
+        if (marker) {
+            if (useLeaflet) {
+                if (map) {
+                    map.removeLayer(marker);
+                    marker.off(); // Remove all Leaflet event listeners
+                }
+            } else {
+                marker.remove(); // MapLibre cleanup
+            }
+        }
+    }
+    memberMarkers = {};
+
+    // Clear owner marker
+    if (ownerMarker) {
+        if (useLeaflet) {
+            if (map) {
+                map.removeLayer(ownerMarker);
+                ownerMarker.off();
+            }
+        } else {
+            ownerMarker.remove();
+        }
+        ownerMarker = null;
+    }
+
+    // Clear user marker
+    if (userMarker) {
+        if (useLeaflet) {
+            if (map) {
+                map.removeLayer(userMarker);
+                userMarker.off();
+            }
+        } else {
+            userMarker.remove();
+        }
+        userMarker = null;
+    }
 }
 
 async function updateMapMarkers() {
