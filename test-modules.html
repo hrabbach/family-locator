@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Test - Family Location Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+
+        h1 {
+            color: #58a6ff;
+        }
+
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .success {
+            background: #1a3f1a;
+            border: 1px solid #2ea043;
+            color: #56d364;
+        }
+
+        .error {
+            background: #3f1a1a;
+            border: 1px solid #f85149;
+            color: #ff7b72;
+        }
+
+        .info {
+            background: #1a2f3f;
+            border: 1px solid #58a6ff;
+            color: #79c0ff;
+        }
+
+        code {
+            background: #161b22;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 ES6 Module Test Suite</h1>
+    <p>Testing the module structure for the Family Location Tracker refactoring (Issue #15)</p>
+
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+
+        function addResult(type, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        addResult('info', '🚀 Starting module import tests...');
+
+        // Test 1: Utils Module
+        try {
+            const utils = await import('./js/utils.js');
+            const exports = Object.keys(utils);
+            addResult('success', `✓ utils.js loaded (${exports.length} exports): ${exports.join(', ')}`);
+
+            // Test a function
+            const testHtml = utils.escapeHtml('<script>alert("xss")</script>');
+    if (testHtml.includes('&lt;')) {
+    addResult('success', `✓ utils.escapeHtml() works correctly`);
+    }
+    } catch (e) {
+    addResult('error', `✗ utils.js failed: ${e.message}`);
+    }
+
+    // Test 2: Config Module
+    try {
+    const config = await import('./js/config.js');
+    const exports = Object.keys(config);
+    addResult('success', `✓ config.js loaded (${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ config.js failed: ${e.message}`);
+    }
+
+    // Test 3: Geocoding Module
+    try {
+    const geocoding = await import('./js/geocoding.js');
+    const exports = Object.keys(geocoding);
+    addResult('success', `✓ geocoding.js loaded (${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ geocoding.js failed: ${e.message}`);
+    }
+
+    // Test 4: API Module
+    try {
+    const api = await import('./js/api.js');
+    const exports = Object.keys(api);
+    addResult('success', `✓ api.js loaded (${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ api.js failed: ${e.message}`);
+    }
+
+    // Test 5: Map Module (stub)
+    try {
+    const map = await import('./js/map.js');
+    const exports = Object.keys(map);
+    addResult('info', `⚠ map.js loaded (stub - ${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ map.js failed: ${e.message}`);
+    }
+
+    // Test 6: UI Module (stub)
+    try {
+    const ui = await import('./js/ui.js');
+    const exports = Object.keys(ui);
+    addResult('info', `⚠ ui.js loaded (stub - ${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ ui.js failed: ${e.message}`);
+    }
+
+    // Test 7: Main Module
+    try {
+    const main = await import('./js/main.js');
+    const exports = Object.keys(main);
+    addResult('success', `✓ main.js loaded (${exports.length} exports): ${exports.join(', ')}`);
+    } catch (e) {
+    addResult('error', `✗ main.js failed: ${e.message}`);
+    }
+
+    addResult('info', '✅ Module test suite complete. Check results above.');
+    </script>
+</body>
+
+</html>
