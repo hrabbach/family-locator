@@ -64,12 +64,26 @@ The tool uses the following endpoint:
 - **v2.0.0**: Added Reverse Geocoding support and address caching.
 - **v2.8.2**: Implemented geocoding request queue to resolve N+1 API issue and respect rate limits.
 - **v2.8.5**: Validated and expanded API time range parameters (`start_at`) to ensure last known location is retrieved even if old.
+- **v2.8.9**: Implemented automated version management system with centralized version control via package.json and automated propagation to all files.
+- **v2.9.0**: **Major Refactoring** - Restructured monolithic 2,640-line app.js into 8 focused ES6 modules (~2,380 lines total) for improved maintainability and caching:
+  - **js/utils.js** (110 lines): Helper functions, distance calculations, HTML escaping, formatting
+  - **js/config.js** (305 lines): Configuration management, validation, URL processing
+  - **js/geocoding.js** (205 lines): Address resolution with Photon API
+  - **js/api.js** (220 lines): Data fetching, retry logic, polling management
+  - **js/state.js** (190 lines): Shared application state
+  - **js/ui.js** (510 lines): All UI update functions and DOM manipulation
+  - **js/map.js** (840 lines): Map engine loading, marker management, user tracking
+  - **js/main.js** (131 lines): Entry point stub (transitional)
+  - Updated Docker, nginx, and service worker configurations to support ES6 modules
+  - Implemented proper MIME type handling for JavaScript modules in nginx
+  - Zero breaking changes - all features remain functional
 
 ### Recent Optimizations (by Jules)
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
+- **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.8.5
+### Current Version: v2.9.0
 
 

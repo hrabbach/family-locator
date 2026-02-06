@@ -1,5 +1,11 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
+/**
+ * @fileoverview API communication with retry logic and polling.
+ * @module js/api
+ * @version 2.9.0
+ */
+
 import { getConfig } from './config.js';
 import { resolveAddress } from './geocoding.js';
 

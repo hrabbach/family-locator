@@ -1,13 +1,10 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
-/*
- * MAIN ENTRY POINT - Family Location Tracker
- * This module orchestrates the application by importing and coordinating
- * all other modules. It handles initialization, event binding, and service worker.
- * 
- * NOTE: This is a transitional implementation. The full app.js needs to be
- * migrated here piece by piece. For now, this serves as the module entry point
- * that will co-exist with the original app.js until full migration is complete.
+/**
+ * @fileoverview Main application entry point (transitional).
+ * Co-exists with app.js during gradual ES6 migration.
+ * @module js/main
+ * @version 2.9.0
  */
 
 // ==========================================

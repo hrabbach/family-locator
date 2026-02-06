@@ -1,5 +1,11 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
+/**
+ * @fileoverview Reverse geocoding with queued requests and address caching.
+ * @module js/geocoding
+ * @version 2.9.0
+ */
+
 // ==========================================
 // Geocoding Queue and Address Resolution
 // ==========================================

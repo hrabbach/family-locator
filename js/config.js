@@ -1,14 +1,30 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
+/**
+ * @fileoverview Configuration management for the Family Location Tracker.
+ * Handles app configuration, validation, URL parameter processing, and config sharing.
+ * @module js/config
+ * @version 2.9.0
+ */
+
 // ==========================================
 // Configuration Management
 // ==========================================
 
+/** @const {string} LocalStorage key for app configuration */
 export const CONFIG_KEY = 'family_tracker_config';
+
+/** @const {string} LocalStorage key for display name mappings */
 export const NAMES_KEY = 'family_tracker_names';
 
+/** @type {Object|null} Cached configuration object */
 let cachedConfig = null;
 
+/**
+ * Retrieves the application configuration from localStorage.
+ * Uses caching to avoid repeated JSON parsing.
+ * @returns {Object|null} The configuration object or null if not set
+ */
 export function getConfig() {
     if (cachedConfig) return cachedConfig;
     const configStr = localStorage.getItem(CONFIG_KEY);

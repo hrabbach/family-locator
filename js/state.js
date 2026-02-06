@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
-/*
- * STATE MODULE - Centralized Application State
- * 
- * This module manages all shared application state to prevent circular
- * dependencies between modules and provide a single source of truth.
+/**
+ * @fileoverview Centralized application state management.
+ * Prevents circular dependencies and provides single source of truth.
+ * @module js/state
+ * @version 2.9.0
  */
 
 // ==========================================

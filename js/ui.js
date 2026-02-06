@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
-/*
- * UI MODULE - User Interface Management
- * Handles all DOM manipulation, view switching, and UI updates
+/**
+ * @fileoverview User interface management and DOM manipulation.
+ * @module js/ui
+ * @version 2.9.0
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';

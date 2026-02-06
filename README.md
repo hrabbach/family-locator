@@ -1,6 +1,6 @@
 # Family Locator
 
-A lightweight, self-hosted Progressive Web App (PWA) designed to track family members' locations using the Dawarich API. This tool provides a premium, mobile-first dashboard and an advanced interactive map view for staying connected with your loved ones.
+A lightweight, self-hosted Progressive Web App (PWA) designed to track family members' locations using the Dawarich API. Built with a modern ES6 module architecture for improved maintainability and caching, this tool provides a premium, mobile-first dashboard and an advanced interactive map view for staying connected with your loved ones.
 
 ## Key Features
 

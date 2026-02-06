@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
 
-/*
- * MAP MODULE - Map Rendering and Marker Management
- * Handles Leaflet and MapLibre GL map engines, markers, and user tracking
+/**
+ * @fileoverview Map rendering with dual engine support (Leaflet/MapLibre).
+ * @module js/map
+ * @version 2.9.0
  */
 
 import { MEMBER_COLORS, getMemberColorByIndex, calculateDistance } from './utils.js';
