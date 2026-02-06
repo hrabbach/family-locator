@@ -12,15 +12,15 @@
     <meta http-equiv="Expires" content="0">
     <title>Family Locator</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
-        integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+"
-        crossorigin="anonymous" defer></script>
+        integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"
+        defer></script>
     <!-- Map Engines are loaded dynamically in app.js -->
 
-    <link rel="icon" type="image/png" href="./icon.png?v=2.8.8">
-    <link rel="stylesheet" href="./style.css?v=2.8.8">
-    <link rel="manifest" href="./manifest.json?v=2.8.8">
-    <meta name="theme-color" content="#0d1117">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.8.8">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.8.9">
+    <link rel="stylesheet" href="./style.css?v=2.8.9">
+    <link rel="manifest" href="./manifest.json?v=2.8.9">
+    <meta name="theme-color" content="#1e293b">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.8.9">
 </head>
 
 <body>
@@ -46,7 +46,8 @@
 
             <div class="form-group">
                 <label for="mapEngine">Map Engine</label>
-                <select id="mapEngine" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: #161b22; color: var(--text-primary);">
+                <select id="mapEngine"
+                    style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: #161b22; color: var(--text-primary);">
                     <option value="maplibre">MapLibre GL JS (Vector - Default)</option>
                     <option value="leaflet">Leaflet (Raster - Classic)</option>
                 </select>
@@ -55,7 +56,8 @@
             <div class="form-group" id="mapStyleGroup">
                 <label for="mapStyleUrl">Map Style URL (Vector)</label>
                 <input type="url" id="mapStyleUrl" placeholder="Default: ./style.json">
-                <small style="color: var(--text-secondary); font-size: 0.75rem;">Supports MapLibre JSON styles (e.g., Protomaps, MapTiler)</small>
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">Supports MapLibre JSON styles (e.g.,
+                    Protomaps, MapTiler)</small>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 1.5rem 0; padding-top: 1rem;">
@@ -87,7 +89,8 @@
                     style="margin-top: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                     <input type="checkbox" id="stationaryEnabled" class="member-checkbox">
                     <label for="stationaryEnabled"
-                        style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Stationary Device Mode</label>
+                        style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">Stationary Device
+                        Mode</label>
                 </div>
                 <div id="stationarySettings"
                     style="display: none; padding-left: 0.5rem; border-left: 2px solid var(--border-color); margin-left: 0.5rem;">
@@ -129,8 +132,16 @@
 
         <!-- Dashboard View -->
         <div id="dashboardView" class="glass-panel dashboard-view">
-            <button id="shareLocationBtn" style="width: 100%; background: var(--accent-color); color: white; margin-bottom: 1rem; display: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            <button id="shareLocationBtn"
+                style="width: 100%; background: var(--accent-color); color: white; margin-bottom: 1rem; display: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
                 Share Live Location
             </button>
             <div id="membersList">
@@ -194,8 +205,10 @@
                 </div>
             </div>
 
-            <div id="generatedLinkContainer" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Share this link:</div>
+            <div id="generatedLinkContainer"
+                style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Share this link:
+                </div>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="text" id="shareLinkInput" readonly style="flex: 1; font-size: 0.85rem;">
                     <button id="copyShareLinkBtn" style="padding: 0.2rem 0.6rem;">Copy</button>
@@ -210,9 +223,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.8.8</a>
+        class="version-tag">v2.8.9</a>
 
-    <script src="./app.js?v=2.8.8"></script>
+    <script src="./app.js?v=2.8.9"></script>
 </body>
 
 </html>

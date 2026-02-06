@@ -1,4 +1,9 @@
 {
+  "name": "family-location-tracker",
+  "version": "2.8.9",
+  "scripts": {
+    "update-version": "node update-version.js"
+  },
   "dependencies": {
     "jsdom": "^28.0.0"
   }
