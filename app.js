@@ -1,4 +1,33 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
+
+// ==========================================
+// MODULE IMPORTS - Gradual Migration
+// ==========================================
+// NOTE: Gradually migrating to ES6 modules. These imports will replace
+// local implementations as we verify each migration step.
+
+import {
+    escapeHtml,
+    formatRelativeTime as formatRelativeTimeModule,
+    getBatteryClass,
+    getMemberColor,
+    getMemberColorByIndex,
+    calculateDistance,
+    MEMBER_COLORS
+} from './js/utils.js';
+
+import {
+    getConfig as getConfigModule,
+    invalidateConfig as invalidateConfigModule,
+    validateConfig,
+    processUrlConfiguration,
+    CONFIG_KEY,
+    NAMES_KEY
+} from './js/config.js';
+
+// ==========================================
+// LEGACY CODE - Being gradually replaced
+// ==========================================
 const CONFIG_KEY = 'family_tracker_config';
 const NAMES_KEY = 'family_tracker_names';
 
