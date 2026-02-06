@@ -1033,18 +1033,19 @@ function saveConfig() {
             config.mapStyleUrl = './style.json';
         }
 
-        // Validate and add Photon URL if geocoding enabled
-        if (geocodeEnabled) {
-            if (photonUrlRaw) {
+        // Set Photon URL (with lenient validation)
+        if (photonUrlRaw) {
+            try {
                 config.photonUrl = sanitizeUrl(photonUrlRaw);
-            } else {
+            } catch (e) {
+                // Validation failed, use default
+                console.warn('Invalid Photon URL, using default:', e.message);
                 config.photonUrl = 'https://photon.komoot.io';
             }
-            config.photonApiKey = photonApiKeyRaw; // API key is optional for Photon
         } else {
-            config.photonUrl = photonUrlRaw || 'https://photon.komoot.io';
-            config.photonApiKey = photonApiKeyRaw;
+            config.photonUrl = 'https://photon.komoot.io';
         }
+        config.photonApiKey = photonApiKeyRaw;
 
         // Validate and add stationary coordinates if enabled
         if (stationaryEnabled && fixedLatRaw && fixedLonRaw) {
@@ -1369,11 +1370,7 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
     const batteryClass = getBatteryClass(batt);
     const timeStr = timestamp ? formatRelativeTime(timestamp) : 'Unknown';
 
-    let displayName = ownerName;
-    if (!isOwner) {
-        displayName = names[member.email] || member.name || member.email;
-    }
-
+    // displayName was already defined above, don't redeclare it
     const isSelected = selectedMemberEmails.has(email);
     const isStationaryMode = config.fixedLat && config.fixedLon;
 
