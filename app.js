@@ -28,11 +28,15 @@ import {
 // ==========================================
 // LEGACY CODE - Being gradually replaced
 // ==========================================
-const CONFIG_KEY = 'family_tracker_config';
-const NAMES_KEY = 'family_tracker_names';
+
+// MIGRATED: Now imported from config.js module
+// const CONFIG_KEY = 'family_tracker_config';
+// const NAMES_KEY = 'family_tracker_names';
 
 let cachedConfig = null;
 
+// MIGRATED: Now imported from config.js module
+// Use getConfigModule for new code, keeping legacy wrapper for now
 function getConfig() {
     if (cachedConfig) return cachedConfig;
     const configStr = localStorage.getItem(CONFIG_KEY);
@@ -40,6 +44,7 @@ function getConfig() {
     return cachedConfig;
 }
 
+// MIGRATED: Now imported from config.js module
 function invalidateConfig() {
     cachedConfig = null;
 }
@@ -201,6 +206,8 @@ let geocodeProcessing = false;
 const MAX_GEOCODE_QUEUE_SIZE = 50; // Prevent unbounded queue growth
 let wakeLock = null;
 
+// MIGRATED: Now imported from utils.js module
+/*
 const MEMBER_COLORS = [
     { name: 'blue', hex: '#2A81CB', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
     { name: 'red', hex: '#CB2B3E', icon: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' },
@@ -227,6 +234,7 @@ function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
 }
+*/
 
 // Security: Input Validation Functions
 function sanitizeUrl(url) {
@@ -542,6 +550,8 @@ async function performGeocodeFetch(lat, lon, config) {
     }
 }
 
+// MIGRATED: Now imported from utils.js module
+/*
 function getMemberColorByIndex(index) {
     if (index < 0) return MEMBER_COLORS[0];
     return MEMBER_COLORS[index % MEMBER_COLORS.length];
@@ -552,7 +562,10 @@ function getMemberColor(email, locations) {
     const index = locations.findIndex(m => m.email === email);
     return getMemberColorByIndex(index);
 }
+*/
 
+// MIGRATED: Now imported from config.js module
+/* Commented out - using imported version
 function processUrlConfiguration() {
     const urlParams = new URLSearchParams(window.location.search);
     const bulkConfig = urlParams.get('config');
@@ -723,6 +736,7 @@ async function copyConfigUrl() {
         }, 2000);
     }
 }
+*/
 
 // Initialize
 function init() {
@@ -2432,6 +2446,8 @@ function closeModal() {
     currentEditingEmail = null;
 }
 
+// MIGRATED: Now imported from utils.js module as formatRelativeTimeModule
+/*
 function formatRelativeTime(timestamp) {
     // API timestamp is seconds since Unix epoch
     const date = new Date(timestamp * 1000);
@@ -2448,6 +2464,10 @@ function formatRelativeTime(timestamp) {
 
     return `${absTime} (${relative})`;
 }
+*/
+
+// For now, create an alias to maintain compatibility
+const formatRelativeTime = formatRelativeTimeModule;
 
 function setupEventListeners() {
     // Buttons
