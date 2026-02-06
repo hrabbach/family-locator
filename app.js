@@ -198,6 +198,95 @@ function escapeHtml(text) {
     return String(text).replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_MAP[match]);
 }
 
+// Security: Input Validation Functions
+function sanitizeUrl(url) {
+    if (!url || typeof url !== 'string') {
+        throw new Error('URL is required and must be a string');
+    }
+
+    const trimmed = url.trim();
+    if (trimmed.length === 0) {
+        throw new Error('URL cannot be empty');
+    }
+
+    try {
+        const parsed = new URL(trimmed);
+
+        // Only allow http and https protocols
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+            throw new Error('Only HTTP and HTTPS protocols are allowed');
+        }
+
+        // Validate hostname exists
+        if (!parsed.hostname || parsed.hostname.length === 0) {
+            throw new Error('Invalid hostname');
+        }
+
+        return parsed.toString().replace(/\/$/, ''); // Remove trailing slash
+    } catch (e) {
+        if (e.message.includes('Invalid URL')) {
+            throw new Error('Invalid URL format');
+        }
+        throw e;
+    }
+}
+
+function validateApiKey(key) {
+    if (!key || typeof key !== 'string') {
+        throw new Error('API key is required');
+    }
+
+    const trimmed = key.trim();
+
+    // Check length (typical API keys are 20-256 characters)
+    if (trimmed.length < 20) {
+        throw new Error('API key is too short (minimum 20 characters)');
+    }
+
+    if (trimmed.length > 256) {
+        throw new Error('API key is too long (maximum 256 characters)');
+    }
+
+    // Allow alphanumeric, hyphens, underscores, and dots (common in API keys)
+    if (!/^[a-zA-Z0-9_.\-]+$/.test(trimmed)) {
+        throw new Error('API key contains invalid characters');
+    }
+
+    return trimmed;
+}
+
+function validateCoordinates(lat, lon) {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+        throw new Error('Coordinates must be valid numbers');
+    }
+
+    if (latitude < -90 || latitude > 90) {
+        throw new Error('Latitude must be between -90 and 90');
+    }
+
+    if (longitude < -180 || longitude > 180) {
+        throw new Error('Longitude must be between -180 and 180');
+    }
+
+    return { lat: latitude, lon: longitude };
+}
+
+function validateName(name) {
+    if (!name) return ''; // Name is optional
+
+    const trimmed = String(name).trim();
+
+    // Limit length to prevent abuse
+    if (trimmed.length > 100) {
+        throw new Error('Name is too long (maximum 100 characters)');
+    }
+
+    return trimmed;
+}
+
 // Wake Lock Logic
 async function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
@@ -238,11 +327,11 @@ function resolveAddress(member) {
         const lat = member.latitude || member.lat;
         const lon = member.longitude || member.lon;
         if (lat && lon) {
-             const key = getCoordinateKey(lat, lon);
-             if (!addressCache.has(key)) {
-                 addressCache.set(key, member.address);
-                 lastKnownAddresses[member.email || 'OWNER'] = member.address;
-             }
+            const key = getCoordinateKey(lat, lon);
+            if (!addressCache.has(key)) {
+                addressCache.set(key, member.address);
+                lastKnownAddresses[member.email || 'OWNER'] = member.address;
+            }
         }
         return member.address;
     }
@@ -402,32 +491,89 @@ function processUrlConfiguration() {
 
     if (server || key || name || engine || mapStyle || geocode || photon || photonKey || awake || lat || lon) {
         const config = getConfig() || {};
-        if (server) config.baseUrl = server.replace(/\/$/, "");
-        if (key) config.apiKey = key;
-        if (name) config.apiUserName = name;
-        if (engine) config.mapEngine = engine;
-        if (mapStyle) config.mapStyleUrl = mapStyle;
-        if (geocode) config.geocodeEnabled = geocode === 'true';
-        if (photon) config.photonUrl = photon.replace(/\/$/, "");
-        if (photonKey) config.photonApiKey = photonKey;
-        if (awake) config.keepAwakeEnabled = awake === 'true';
-        if (lat) config.fixedLat = lat;
-        if (lon) config.fixedLon = lon;
 
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-        invalidateConfig();
-        updated = true;
+        try {
+            // Validate and sanitize inputs
+            if (server) {
+                config.baseUrl = sanitizeUrl(server);
+            }
+
+            if (key) {
+                config.apiKey = validateApiKey(key);
+            }
+
+            if (name) {
+                config.apiUserName = validateName(name);
+            }
+
+            if (engine && (engine === 'maplibre' || engine === 'leaflet')) {
+                config.mapEngine = engine;
+            }
+
+            if (mapStyle) {
+                try {
+                    config.mapStyleUrl = sanitizeUrl(mapStyle);
+                } catch (e) {
+                    // Allow relative paths
+                    if (!mapStyle.includes('://')) {
+                        config.mapStyleUrl = mapStyle;
+                    }
+                }
+            }
+
+            if (geocode === 'true' || geocode === 'false') {
+                config.geocodeEnabled = geocode === 'true';
+            }
+
+            if (photon) {
+                config.photonUrl = sanitizeUrl(photon);
+            }
+
+            if (photonKey && typeof photonKey === 'string') {
+                config.photonApiKey = photonKey.trim();
+            }
+
+            if (awake === 'true' || awake === 'false') {
+                config.keepAwakeEnabled = awake === 'true';
+            }
+
+            if (lat && lon) {
+                const coords = validateCoordinates(lat, lon);
+                config.fixedLat = coords.lat.toString();
+                config.fixedLon = coords.lon.toString();
+            }
+
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            invalidateConfig();
+            updated = true;
+
+        } catch (error) {
+            console.error('URL parameter validation error:', error);
+            // Don't update config if validation fails
+        }
     }
 
     if (namesParam) {
-        const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
-        const pairs = namesParam.split(';');
-        pairs.forEach(pair => {
-            const [email, n] = pair.split(':');
-            if (email && n) names[email.trim()] = n.trim();
-        });
-        localStorage.setItem(NAMES_KEY, JSON.stringify(names));
-        updated = true;
+        try {
+            const names = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+            const pairs = namesParam.split(';');
+            pairs.forEach(pair => {
+                const [email, n] = pair.split(':');
+                if (email && n) {
+                    // Basic email validation
+                    const trimmedEmail = email.trim();
+                    const trimmedName = validateName(n);
+
+                    if (trimmedEmail.length > 0 && trimmedName.length > 0) {
+                        names[trimmedEmail] = trimmedName;
+                    }
+                }
+            });
+            localStorage.setItem(NAMES_KEY, JSON.stringify(names));
+            updated = true;
+        } catch (error) {
+            console.error('Names parameter validation error:', error);
+        }
     }
 
     // Clear sensitive params from URL without reload
@@ -686,26 +832,26 @@ async function fetchSharedData() {
             // BUT if we just got new data, we should probably force update?
             // Let's force update if we have main data.
             if (lastLocations.length > 0 || ownerLocation) {
-                 const combined = {
-                     locations: [...lastLocations, ...sharedLocations]
-                 };
-                 // We don't want to overwrite lastLocations global permanently with duplicates?
-                 // Actually updateUI takes 'data' arg.
-                 if (elements.dashboardView.classList.contains('active')) {
-                     updateUI(combined);
-                 }
-                 if (elements.mapView.classList.contains('active')) {
-                     // updateMapMarkers reads global 'lastLocations'.
-                     // We need to temporarily patch it or update the logic there.
-                     // A cleaner way is to make 'lastLocations' a getter? No.
-                     // Let's just append to lastLocations strictly for the view?
-                     // No, that grows it indefinitely.
+                const combined = {
+                    locations: [...lastLocations, ...sharedLocations]
+                };
+                // We don't want to overwrite lastLocations global permanently with duplicates?
+                // Actually updateUI takes 'data' arg.
+                if (elements.dashboardView.classList.contains('active')) {
+                    updateUI(combined);
+                }
+                if (elements.mapView.classList.contains('active')) {
+                    // updateMapMarkers reads global 'lastLocations'.
+                    // We need to temporarily patch it or update the logic there.
+                    // A cleaner way is to make 'lastLocations' a getter? No.
+                    // Let's just append to lastLocations strictly for the view?
+                    // No, that grows it indefinitely.
 
-                     // Solution: updateMapMarkers should read (lastLocations + sharedLocations)
-                     // But I can't easily change updateMapMarkers signature everywhere.
-                     // I will modify updateMapMarkers to look at sharedLocations global.
-                     updateMapMarkers();
-                 }
+                    // Solution: updateMapMarkers should read (lastLocations + sharedLocations)
+                    // But I can't easily change updateMapMarkers signature everywhere.
+                    // I will modify updateMapMarkers to look at sharedLocations global.
+                    updateMapMarkers();
+                }
             }
         }
 
@@ -776,47 +922,93 @@ function showDashboard() {
 }
 
 function saveConfig() {
-    const baseUrl = elements.baseUrlInput.value.trim().replace(/\/$/, "");
-    const apiKey = elements.apiKeyInput.value.trim();
-    const apiUserName = elements.apiUserNameInput.value.trim();
+    const baseUrlRaw = elements.baseUrlInput.value.trim();
+    const apiKeyRaw = elements.apiKeyInput.value.trim();
+    const apiUserNameRaw = elements.apiUserNameInput.value.trim();
     const mapEngine = elements.mapEngineInput.value;
-    const mapStyleUrl = elements.mapStyleUrlInput.value.trim();
+    const mapStyleUrlRaw = elements.mapStyleUrlInput.value.trim();
 
     const geocodeEnabled = elements.geocodeEnabled.checked;
-    const photonUrl = elements.photonUrl.value.trim().replace(/\/$/, "");
-    const photonApiKey = elements.photonApiKey.value.trim();
+    const photonUrlRaw = elements.photonUrl.value.trim();
+    const photonApiKeyRaw = elements.photonApiKey.value.trim();
     const keepAwakeEnabled = elements.keepAwakeEnabled.checked;
 
     const stationaryEnabled = elements.stationaryEnabled.checked;
-    const fixedLat = elements.fixedLat.value.trim();
-    const fixedLon = elements.fixedLon.value.trim();
+    const fixedLatRaw = elements.fixedLat.value.trim();
+    const fixedLonRaw = elements.fixedLon.value.trim();
 
-    if (!baseUrl || !apiKey) {
-        alert("Please fill in both fields");
+    // Validate required fields
+    if (!baseUrlRaw || !apiKeyRaw) {
+        alert("Please provide both Dawarich Base URL and API Key");
         return;
     }
 
-    const config = {
-        baseUrl,
-        apiKey,
-        apiUserName,
-        mapEngine,
-        mapStyleUrl,
-        geocodeEnabled,
-        photonUrl: photonUrl || 'https://photon.komoot.io', // Default if empty
-        photonApiKey,
-        keepAwakeEnabled
-    };
+    try {
+        // Validate and sanitize base URL
+        const baseUrl = sanitizeUrl(baseUrlRaw);
 
-    if (stationaryEnabled && fixedLat && fixedLon) {
-        config.fixedLat = fixedLat;
-        config.fixedLon = fixedLon;
+        // Validate API key
+        const apiKey = validateApiKey(apiKeyRaw);
+
+        // Validate optional name
+        const apiUserName = validateName(apiUserNameRaw);
+
+        // Build config object
+        const config = {
+            baseUrl,
+            apiKey,
+            apiUserName,
+            mapEngine,
+            geocodeEnabled,
+            keepAwakeEnabled
+        };
+
+        // Validate and add map style URL if provided
+        if (mapStyleUrlRaw) {
+            try {
+                const mapStyleUrl = sanitizeUrl(mapStyleUrlRaw);
+                config.mapStyleUrl = mapStyleUrl;
+            } catch (e) {
+                // If relative path, allow it
+                if (!mapStyleUrlRaw.includes('://')) {
+                    config.mapStyleUrl = mapStyleUrlRaw;
+                } else {
+                    throw e;
+                }
+            }
+        } else {
+            config.mapStyleUrl = './style.json';
+        }
+
+        // Validate and add Photon URL if geocoding enabled
+        if (geocodeEnabled) {
+            if (photonUrlRaw) {
+                config.photonUrl = sanitizeUrl(photonUrlRaw);
+            } else {
+                config.photonUrl = 'https://photon.komoot.io';
+            }
+            config.photonApiKey = photonApiKeyRaw; // API key is optional for Photon
+        } else {
+            config.photonUrl = photonUrlRaw || 'https://photon.komoot.io';
+            config.photonApiKey = photonApiKeyRaw;
+        }
+
+        // Validate and add stationary coordinates if enabled
+        if (stationaryEnabled && fixedLatRaw && fixedLonRaw) {
+            const coords = validateCoordinates(fixedLatRaw, fixedLonRaw);
+            config.fixedLat = coords.lat.toString();
+            config.fixedLon = coords.lon.toString();
+        }
+
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        invalidateConfig();
+        showDashboard();
+        startTracking();
+    } catch (error) {
+        // Show user-friendly error message
+        alert(`Configuration Error: ${error.message}\n\nPlease check your inputs and try again.`);
+        console.error('Config validation error:', error);
     }
-
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-    invalidateConfig();
-    showDashboard();
-    startTracking();
 }
 
 async function startScan() {
@@ -852,17 +1044,31 @@ function stopScan() {
 function onScanSuccess(decodedText) {
     try {
         const data = JSON.parse(decodedText);
-        if (data.server_url && data.api_key) {
-            elements.baseUrlInput.value = data.server_url.replace(/\/$/, "");
-            elements.apiKeyInput.value = data.api_key;
-            stopScan();
-            // Do not auto-save. Let user enter name.
-            alert("QR Code scanned! Please enter your name (optional) and click 'Start Tracking'.");
-        } else {
+
+        // Validate required fields exist
+        if (!data.server_url || !data.api_key) {
             alert("Invalid QR Code format. Missing server_url or api_key.");
+            return;
         }
-    } catch (e) {
-        alert("Invalid QR Code. Could not parse JSON.");
+
+        // Validate the URL and API key
+        const validatedUrl = sanitizeUrl(data.server_url);
+        const validatedKey = validateApiKey(data.api_key);
+
+        // If validation passed, populate the form
+        elements.baseUrlInput.value = validatedUrl;
+        elements.apiKeyInput.value = validatedKey;
+
+        stopScan();
+        alert("QR Code scanned successfully! Please enter your name (optional) and click 'Start Tracking'.");
+
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            alert("Invalid QR Code. Could not parse JSON.");
+        } else {
+            alert(`Invalid QR Code: ${error.message}`);
+        }
+        console.error('QR code validation error:', error);
     }
 }
 
@@ -929,6 +1135,11 @@ async function fetchData() {
         // Start fetching owner location in parallel to save time
         const ownerFetchPromise = fetchOwnerLocation(config);
 
+        // SECURITY NOTE: The Dawarich API currently requires API keys as URL query parameters.
+        // This is not ideal from a security perspective (keys can be exposed in logs, browser history, etc.)
+        // but is a limitation of the current Dawarich API design. When Dawarich supports header-based
+        // authentication (e.g., Authorization: Bearer <token>), this should be updated.
+        // See: https://github.com/Freika/dawarich/issues for API enhancement requests.
         const response = await fetch(`${config.baseUrl}/api/v1/families/locations?api_key=${config.apiKey}`);
         if (!response.ok) throw new Error('API request failed');
 
@@ -1094,7 +1305,7 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
 
     // Check if card has content (if it's new)
     if (!card.hasChildNodes()) {
-         card.innerHTML = `
+        card.innerHTML = `
              <div class="member-checkbox-container"></div>
              <div class="avatar"></div>
              <div class="member-info">
@@ -1211,12 +1422,12 @@ function updateMemberCardContent(card, member, config, names, isOwner, index) {
         let show = false;
         if (isOwner) {
             if (isStationaryMode) {
-                 dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
-                 show = true;
+                dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
+                show = true;
             }
         } else {
-             dist = calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude);
-             show = true;
+            dist = calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude);
+            show = true;
         }
 
         if (show) {
@@ -1512,7 +1723,7 @@ async function updateMapMarkers() {
             const popupContent = `<b>${escapeHtml(ownerName)}</b><br>${escapeHtml(timeStr)}<br>Bat: ${batt}%${ownerLocation.address ? `<br>${escapeHtml(ownerLocation.address)}` : ''}`;
 
             if (useLeaflet) {
-                 // --- LEAFLET OWNER ---
+                // --- LEAFLET OWNER ---
                 if (!ownerMarker) {
                     const goldIcon = new L.Icon({
                         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
@@ -1536,7 +1747,7 @@ async function updateMapMarkers() {
                 }
                 bounds.extend([lat, lng]);
             } else {
-                 // --- MAPLIBRE OWNER ---
+                // --- MAPLIBRE OWNER ---
                 if (!ownerMarker) {
                     const container = document.createElement('div');
                     container.className = 'custom-marker-container';
@@ -1580,7 +1791,7 @@ async function updateMapMarkers() {
     if (userLocation && proximityEnabled) {
         if (useLeaflet) {
             // --- LEAFLET USER ---
-             if (!userMarker) {
+            if (!userMarker) {
                 userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
                     radius: 8,
                     fillColor: "#4a90e2",
@@ -1940,7 +2151,7 @@ function updateUserMarker() {
     const useLeaflet = config.mapEngine === 'leaflet';
 
     if (useLeaflet) {
-         if (!userMarker) {
+        if (!userMarker) {
             userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
                 radius: 8,
                 fillColor: "#4a90e2",

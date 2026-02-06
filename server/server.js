@@ -7,6 +7,36 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Security: Rate limiting to prevent abuse
+const rateLimit = require('express-rate-limit');
+
+// Rate limiter for sharing endpoint (stricter)
+const shareLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 share requests per 15 minutes
+    message: 'Too many share requests from this IP, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Rate limiter for location fetching (more lenient to allow frequent polling)
+const locationLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 100, // Allow up to 100 requests per minute (every 600ms)
+    message: 'Too many location requests, please slow down',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Rate limiter for geocoding (moderate)
+const geocodeLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 30, // 30 requests per minute
+    message: 'Too many geocoding requests, please slow down',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Configuration
 const PORT = process.env.PORT || 3000;
 const DAWARICH_API_URL = process.env.DAWARICH_API_URL;
@@ -14,8 +44,22 @@ const DAWARICH_API_KEY = process.env.DAWARICH_API_KEY;
 const PHOTON_API_URL = process.env.PHOTON_API_URL || 'https://photon.komoot.io';
 const PHOTON_API_KEY = process.env.PHOTON_API_KEY || '';
 
-// If no secret provided, generate one (invalidates tokens on restart, which is fine for simple setups)
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+// Security: Require JWT_SECRET - fail fast if not provided or too short
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET environment variable is required for security.');
+    console.error('Please set JWT_SECRET to a random string of at least 32 characters.');
+    console.error('Example: JWT_SECRET=$(openssl rand -hex 32)');
+    process.exit(1);
+}
+
+if (JWT_SECRET.length < 32) {
+    console.error('FATAL ERROR: JWT_SECRET must be at least 32 characters long for security.');
+    console.error(`Current length: ${JWT_SECRET.length}`);
+    console.error('Example: JWT_SECRET=$(openssl rand -hex 32)');
+    process.exit(1);
+}
 
 // Simple in-memory cache
 const locationCache = new Map();
@@ -100,7 +144,7 @@ const checkConfig = (req, res, next) => {
  * Generates a sharing token.
  * Body: { duration: number (seconds), email: string (optional), name: string (optional) }
  */
-app.post('/api/share', checkConfig, (req, res) => {
+app.post('/api/share', shareLimiter, checkConfig, (req, res) => {
     const { duration, email, name, styleUrl } = req.body;
 
     // Default duration: 1 hour
@@ -124,7 +168,7 @@ app.post('/api/share', checkConfig, (req, res) => {
  * Returns the location of the user specified in the token.
  * Query: ?token=<jwt_token>
  */
-app.get('/api/shared/location', checkConfig, async (req, res) => {
+app.get('/api/shared/location', locationLimiter, checkConfig, async (req, res) => {
     const { token } = req.query;
 
     if (!token) {
