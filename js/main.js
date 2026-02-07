@@ -4,14 +4,14 @@
  * @fileoverview Main application entry point.
  * Orchestrates all modules and handles application initialization.
  * @module js/main
- * @version 2.10.0
+ * @version 2.10.1
  */
 
 // ==========================================
 // Module Imports
 // ==========================================
 
-import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';
+import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance, formatTime } from './utils.js';
 import {
     getConfig,
     invalidateConfig,
@@ -439,7 +439,7 @@ async function fetchData() {
             updateMapMarkers();
         }
 
-        elements.lastUpdated.innerText = `Last updated: ${new Date().toLocaleTimeString()}`;
+        elements.lastUpdated.innerText = `Last updated: ${formatTime(new Date(), true)}`;
 
     } catch (error) {
         console.error('Fetch failed:', error);

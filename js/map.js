@@ -3,10 +3,10 @@
 /**
  * @fileoverview Map rendering with dual engine support (Leaflet/MapLibre).
  * @module js/map
- * @version 2.9.0
+ * @version 2.10.1
  */
 
-import { MEMBER_COLORS, getMemberColorByIndex, calculateDistance } from './utils.js';
+import { MEMBER_COLORS, getMemberColorByIndex, calculateDistance, formatDateTime } from './utils.js';
 import { getConfig } from './config.js';
 import * as State from './state.js';
 
@@ -462,7 +462,7 @@ export async function updateMapMarkers(
             const lat = member.latitude;
             const lng = member.longitude;
             const displayName = names[email] || member.name || email;
-            const popupContent = `<b>${escapeHtmlFn(displayName)}</b><br>${escapeHtmlFn(new Date(member.timestamp * 1000).toLocaleString())}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtmlFn(member.address)}` : ''}`;
+            const popupContent = `<b>${escapeHtmlFn(displayName)}</b><br>${escapeHtmlFn(formatDateTime(member.timestamp))}<br>Bat: ${member.battery}%${member.address ? `<br>${escapeHtmlFn(member.address)}` : ''}`;
 
             if (useLeaflet) {
                 // --- LEAFLET MARKER UPDATE ---
@@ -534,7 +534,7 @@ export async function updateMapMarkers(
         const lng = ownerLocation.longitude || ownerLocation.lon;
         const ownerName = config.apiUserName ? config.apiUserName : "API Owner";
         const timestamp = ownerLocation.timestamp || ownerLocation.tst;
-        const timeStr = timestamp ? formatRelativeTimeFn(timestamp) : 'Unknown time';
+        const timeStr = timestamp ? formatDateTime(timestamp) : 'Unknown time';
         const batt = ownerLocation.battery || ownerLocation.batt || '?';
 
         if (lat && lng) {
