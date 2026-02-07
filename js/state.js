@@ -60,6 +60,10 @@ export function setSharedMode(token, locations = [], styleUrl = null) {
     sharedStyleUrl = styleUrl;
 }
 
+export function setSharedStyleUrl(url) {
+    sharedStyleUrl = url;
+}
+
 export function clearSharedMode() {
     isSharedMode = false;
     shareToken = null;

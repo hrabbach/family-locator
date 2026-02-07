@@ -44,6 +44,7 @@ import {
     shareToken,
     sharedLocations,
     sharedStyleUrl,
+    setSharedStyleUrl,
     setSharedMode,
     currentEditingEmail,
     setCurrentEditingEmail,
@@ -55,6 +56,18 @@ import {
     userPosition,
     setOwnerLocation
 } from './state.js';
+
+// Hide H1 immediately if shared mode is detected
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('token') || urlParams.has('share_token')) {
+    const h1 = document.querySelector('h1');
+    if (h1) h1.style.display = 'none';
+    const app = document.getElementById('app');
+    if (app) {
+        app.style.maxWidth = 'none';
+        app.classList.add('shared-mode-init');
+    }
+}
 import {
     loadMapEngine,
     showMap as showMapView,
@@ -219,7 +232,7 @@ async function fetchSharedData() {
 
         // Update style if changed
         if (data.styleUrl && data.styleUrl !== sharedStyleUrl) {
-            sharedStyleUrl = data.styleUrl;
+            setSharedStyleUrl(data.styleUrl);
             if (map) {
                 updateMapMarkers();
             }
