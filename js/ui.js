@@ -3,7 +3,7 @@
 /**
  * @fileoverview User interface management and DOM manipulation.
  * @module js/ui
- * @version 2.10.1
+ * @version 2.10.2
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';

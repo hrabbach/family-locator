@@ -1,19 +1,19 @@
 // Copyright (c) 2026 Holger Rabbach. Licensed under the MIT License.
-const CACHE_NAME = 'family-tracker-v2.10.1';
+const CACHE_NAME = 'family-tracker-v2.10.2';
 const ASSETS = [
     '/familytrack/',
     '/familytrack/index.html',
-    '/familytrack/style.css?v=2.10.1',
-    '/familytrack/js/utils.js?v=2.10.1',
-    '/familytrack/js/config.js?v=2.10.1',
-    '/familytrack/js/geocoding.js?v=2.10.1',
-    '/familytrack/js/api.js?v=2.10.1',
-    '/familytrack/js/state.js?v=2.10.1',
-    '/familytrack/js/ui.js?v=2.10.1',
-    '/familytrack/js/map.js?v=2.10.1',
-    '/familytrack/js/main.js?v=2.10.1',
-    '/familytrack/manifest.json?v=2.10.1',
-    '/familytrack/icon.png?v=2.10.1'
+    '/familytrack/style.css?v=2.10.2',
+    '/familytrack/js/utils.js?v=2.10.2',
+    '/familytrack/js/config.js?v=2.10.2',
+    '/familytrack/js/geocoding.js?v=2.10.2',
+    '/familytrack/js/api.js?v=2.10.2',
+    '/familytrack/js/state.js?v=2.10.2',
+    '/familytrack/js/ui.js?v=2.10.2',
+    '/familytrack/js/map.js?v=2.10.2',
+    '/familytrack/js/main.js?v=2.10.2',
+    '/familytrack/manifest.json?v=2.10.2',
+    '/familytrack/icon.png?v=2.10.2'
 ];
 
 self.addEventListener('install', event => {
