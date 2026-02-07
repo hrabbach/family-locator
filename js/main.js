@@ -62,7 +62,7 @@ import {
     closeMap,
     recenterMap,
     cleanupMapMarkers,
-    updateMapMarkers,
+    updateMapMarkers as updateMapMarkersImpl,
     startUserTracking,
     stopUserTracking
 } from './map.js';
@@ -80,6 +80,28 @@ import {
     editName,
     saveModalName as saveModalNameUI
 } from './ui.js';
+
+// Wrapper for map update to inject state
+function updateMapMarkers() {
+    const proximityEnabled = elements.toggleProximity ? elements.toggleProximity.checked : true;
+
+    updateMapMarkersImpl(
+        lastLocations,
+        selectedMemberEmails,
+        ownerLocation,
+        userPosition,
+        isSharedMode,
+        sharedStyleUrl,
+        sharedLocations,
+        showOwnerLocation,
+        proximityEnabled,
+        secondsToRefresh,
+        elements,
+        formatRelativeTime,
+        escapeHtml,
+        updateCountdown
+    );
+}
 
 // ==========================================
 // Application State
