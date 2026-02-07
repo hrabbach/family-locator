@@ -886,7 +886,10 @@ function initSharedMode(token) {
 
 async function fetchSharedData() {
     try {
-        if (isSharedMode) secondsToRefresh = 10;
+        if (isSharedMode) {
+            secondsToRefresh = 10;
+            updateCountdown(); // Update UI immediately to prevent jumps
+        }
 
         const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/shared/location';
         const response = await fetch(`${apiPath}?token=${shareToken}`);
@@ -1245,6 +1248,7 @@ async function fetchData() {
     if (!config) return;
 
     secondsToRefresh = 10; // Reset countdown on actual fetch
+    updateCountdown(); // Update UI immediately to prevent jumps
     elements.refreshStatus.classList.add('refreshing');
 
     try {
