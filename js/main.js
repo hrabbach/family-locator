@@ -100,7 +100,11 @@ function updateMapMarkers() {
         elements,
         formatRelativeTime,
         escapeHtml,
-        updateCountdown
+        updateCountdown,
+        () => {
+            closeMap();
+            showDashboard();
+        }
     );
 }
 
@@ -624,6 +628,13 @@ function setupEventListeners() {
     elements.stationaryEnabled.addEventListener('change', (e) => {
         elements.stationarySettings.style.display = e.target.checked ? 'block' : 'none';
     });
+
+    // Map Proximity (Me) toggle
+    if (elements.toggleProximity) {
+        elements.toggleProximity.addEventListener('change', () => {
+            updateMapMarkers();
+        });
+    }
 
     // Member List Interactions (Delegated)
     elements.membersList.addEventListener('click', (e) => {

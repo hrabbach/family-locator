@@ -329,7 +329,8 @@ export async function updateMapMarkers(
     elementsRef,
     formatRelativeTimeFn,
     escapeHtmlFn,
-    updateCountdownFn
+    updateCountdownFn,
+    onCloseFn
 ) {
     const config = getConfig() || {};
     const useLeaflet = config.mapEngine === 'leaflet';
@@ -779,7 +780,7 @@ export async function updateMapMarkers(
                 lastLocations, selectedMemberEmails, ownerLocation, userLocation,
                 isSharedMode, sharedStyleUrl, sharedLocations, showOwnerLocation,
                 proximityEnabled, secondsToRefresh, sharedExpiresAt, elementsRef, formatRelativeTimeFn,
-                escapeHtmlFn, updateCountdownFn
+                escapeHtmlFn, updateCountdownFn, onCloseFn
             );
         });
         recenterBtn.style.display = 'none';
@@ -795,7 +796,10 @@ export async function updateMapMarkers(
         closeBtn.style.fontSize = '0.8rem';
         closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
         closeBtn.style.color = 'var(--text-primary)';
-        closeBtn.onclick = closeMap;
+        closeBtn.onclick = () => {
+            if (onCloseFn) onCloseFn();
+            else closeMap();
+        };
         buttonsContainer.appendChild(closeBtn);
     }
 
