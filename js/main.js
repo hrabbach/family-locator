@@ -96,6 +96,7 @@ function updateMapMarkers() {
         showOwnerLocation,
         proximityEnabled,
         secondsToRefresh,
+        sharedExpiresAt,
         elements,
         formatRelativeTime,
         escapeHtml,

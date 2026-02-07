@@ -325,6 +325,7 @@ export async function updateMapMarkers(
     showOwnerLocation,
     proximityEnabled,
     secondsToRefresh,
+    sharedExpiresAt,
     elementsRef,
     formatRelativeTimeFn,
     escapeHtmlFn,
@@ -773,12 +774,14 @@ export async function updateMapMarkers(
     recenterBtn.style.color = 'white';
     recenterBtn.style.display = isAutoCenterEnabled ? 'none' : 'block'; // Set initial state
     recenterBtn.onclick = () => {
-        recenterMap(() => updateMapMarkers(
-            lastLocations, selectedMemberEmails, ownerLocation, userLocation,
-            isSharedMode, sharedStyleUrl, sharedLocations, showOwnerLocation,
-            proximityEnabled, secondsToRefresh, elementsRef, formatRelativeTimeFn,
-            escapeHtmlFn, updateCountdownFn
-        ));
+        recenterMap(() => {
+            updateMapMarkers(
+                lastLocations, selectedMemberEmails, ownerLocation, userLocation,
+                isSharedMode, sharedStyleUrl, sharedLocations, showOwnerLocation,
+                proximityEnabled, secondsToRefresh, sharedExpiresAt, elementsRef, formatRelativeTimeFn,
+                escapeHtmlFn, updateCountdownFn
+            );
+        });
         recenterBtn.style.display = 'none';
     };
 
@@ -845,5 +848,7 @@ export async function updateMapMarkers(
     }
 
     // Update countdown immediately to prevent flickering
-    updateCountdownFn();
+    if (updateCountdownFn) {
+        updateCountdownFn(secondsToRefresh, sharedExpiresAt, elementsRef);
+    }
 }
