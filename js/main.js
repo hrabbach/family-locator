@@ -599,6 +599,36 @@ function setupEventListeners() {
         elements.stationarySettings.style.display = e.target.checked ? 'block' : 'none';
     });
 
+    // Member List Interactions (Delegated)
+    elements.membersList.addEventListener('click', (e) => {
+        const target = e.target;
+
+        // 1. Toggle Selection
+        if (target.matches('input.member-checkbox')) {
+            const email = target.dataset.email;
+            toggleMemberSelectionUI(target, email, selectedMemberEmails);
+            return;
+        }
+
+        // 2. Show Single Map
+        const mapActionEl = target.closest('[data-action="show-single-map"]');
+        if (mapActionEl) {
+            const email = mapActionEl.dataset.email;
+            if (email) {
+                showSingleMemberMap(email);
+            }
+            return;
+        }
+
+        // 3. Edit Name
+        const editActionEl = target.closest('[data-action="edit-name"]');
+        if (editActionEl) {
+            const email = editActionEl.dataset.email;
+            editName(email, getConfig, setCurrentEditingEmail);
+            return;
+        }
+    });
+
     // Map engine toggle
     elements.mapEngineInput.addEventListener('change', (e) => {
         elements.mapStyleGroup.style.display = e.target.value === 'maplibre' ? 'block' : 'none';
