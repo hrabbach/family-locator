@@ -29,6 +29,7 @@ import {
 import {
     fetchWithRetry,
     secondsToRefresh,
+    setSecondsToRefresh,
     startTracking,
     stopTracking,
     shareLocation
@@ -164,7 +165,7 @@ async function checkServerStatus() {
 
 async function fetchSharedData() {
     try {
-        if (isSharedMode) secondsToRefresh = 10;
+        if (isSharedMode) setSecondsToRefresh(10);
 
         const apiPath = window.location.pathname.replace('index.html', '').replace(/\/$/, "") + '/api/shared/location';
         const response = await fetch(`${apiPath}?token=${shareToken}`);
@@ -264,7 +265,7 @@ function initSharedMode(token) {
 
     // Countdown
     clearInterval(countdownInterval);
-    secondsToRefresh = 10;
+    setSecondsToRefresh(10);
     countdownInterval = setInterval(() => updateCountdown(secondsToRefresh, sharedExpiresAt, elements), 1000);
 }
 
@@ -289,7 +290,7 @@ async function fetchData() {
     const config = getConfig();
     if (!config) return;
 
-    secondsToRefresh = 10;
+    setSecondsToRefresh(10);
     elements.refreshStatus.classList.add('refreshing');
 
     try {

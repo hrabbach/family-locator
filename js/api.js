@@ -23,6 +23,19 @@ export let isSharedMode = false;
 export let shareToken = null;
 export let sharedStyleUrl = null;
 
+// Setter functions for mutable state
+export function setSecondsToRefresh(value) {
+    secondsToRefresh = value;
+}
+
+export function setRefreshInterval(value) {
+    refreshInterval = value;
+}
+
+export function setCountdownInterval(value) {
+    countdownInterval = value;
+}
+
 // ==========================================
 // Retry Logic with Exponential Backoff
 // ==========================================
