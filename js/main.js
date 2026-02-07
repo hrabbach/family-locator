@@ -615,7 +615,7 @@ function setupEventListeners() {
         if (mapActionEl) {
             const email = mapActionEl.dataset.email;
             if (email) {
-                showSingleMemberMap(email);
+                showSingleMemberMap(email, selectedMemberEmails, showMap);
             }
             return;
         }
