@@ -3,7 +3,7 @@
 /**
  * @fileoverview User interface management and DOM manipulation.
  * @module js/ui
- * @version 2.9.0
+ * @version 2.10.1
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';
@@ -324,6 +324,27 @@ export function updateMemberCardContent(card, member, config, names, isOwner, in
     const batt = member.battery || member.batt || '?';
     const timestamp = member.timestamp || member.tst;
     const displayName = isOwner ? (config.apiUserName || '(You)') : (names[member.email] || member.name || member.email);
+    const isStationaryMode = config.fixedLat && config.fixedLon;
+
+    // Calculate distance text early for comparison
+    let distText = null;
+    if (userLocation) {
+        let dist = 0;
+        let show = false;
+        if (isOwner) {
+            if (isStationaryMode) {
+                dist = calculateDistance(userLocation.lat, userLocation.lng, lat, lon);
+                show = true;
+            }
+        } else {
+            dist = calculateDistance(userLocation.lat, userLocation.lng, lat, lon);
+            show = true;
+        }
+
+        if (show) {
+            distText = `${dist.toFixed(2)} km away`;
+        }
+    }
 
     // Performance: Smart update checking - only update if data actually changed
     const newData = {
@@ -332,7 +353,8 @@ export function updateMemberCardContent(card, member, config, names, isOwner, in
         battery: batt,
         timestamp: timestamp,
         name: displayName,
-        address: member.address || null  // Include address in comparison
+        address: member.address || null,
+        distText: distText
     };
 
     const currentData = card.dataset.memberData ? JSON.parse(card.dataset.memberData) : {};
@@ -351,7 +373,6 @@ export function updateMemberCardContent(card, member, config, names, isOwner, in
 
     // displayName was already defined above, don't redeclare it
     const isSelected = selectedMemberEmails.has(email);
-    const isStationaryMode = config.fixedLat && config.fixedLon;
 
     // Check if card has content (if it's new)
     if (!card.hasChildNodes()) {
@@ -466,24 +487,7 @@ export function updateMemberCardContent(card, member, config, names, isOwner, in
 
     // Distance
     let distEl = locationDiv.querySelector('.member-distance');
-    let distText = null;
-    if (userLocation) {
-        let dist = 0;
-        let show = false;
-        if (isOwner) {
-            if (isStationaryMode) {
-                dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lon));
-                show = true;
-            }
-        } else {
-            dist = calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude);
-            show = true;
-        }
-
-        if (show) {
-            distText = `${dist.toFixed(2)} km away`;
-        }
-    }
+    // distText is already calculated above
 
     if (distText) {
         if (!distEl) {

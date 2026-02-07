@@ -4,7 +4,7 @@
  * @fileoverview Utility functions for the Family Location Tracker.
  * Provides helper functions for calculations, formatting, and UI utilities.
  * @module js/utils
- * @version 2.9.0
+ * @version 2.10.1
  */
 
 // ==========================================
@@ -58,6 +58,41 @@ export function escapeHtml(text) {
 // ==========================================
 
 /**
+ * Formats a date object or timestamp to a time string respecting the user's locale.
+ * @param {Date|number} date - Date object or timestamp in seconds
+ * @param {boolean} [withSeconds=false] - Whether to include seconds
+ * @returns {string} Formatted time string
+ */
+export function formatTime(date, withSeconds = false) {
+    if (typeof date === 'number') date = new Date(date * 1000);
+    const options = {
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    if (withSeconds) {
+        options.second = '2-digit';
+    }
+    return date.toLocaleTimeString(undefined, options);
+}
+
+/**
+ * Formats a date object or timestamp to a date and time string respecting the user's locale.
+ * @param {Date|number} date - Date object or timestamp in seconds
+ * @returns {string} Formatted date and time string
+ */
+export function formatDateTime(date) {
+    if (typeof date === 'number') date = new Date(date * 1000);
+    return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+/**
  * Formats a Unix timestamp as absolute time with relative indicator.
  * @param {number} timestamp - Unix timestamp in seconds
  * @returns {string} Formatted time string (e.g., "14:30 (5m ago)")
@@ -65,7 +100,7 @@ export function escapeHtml(text) {
 export function formatRelativeTime(timestamp) {
     // API timestamp is seconds since Unix epoch
     const date = new Date(timestamp * 1000);
-    const absTime = date.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const absTime = formatTime(date);
 
     const now = Math.floor(Date.now() / 1000);
     const diff = now - timestamp;
