@@ -2,7 +2,7 @@
 
 A lightweight, self-hosted Progressive Web App (PWA) for tracking family members' locations using the Dawarich API. Built with modern ES6 module architecture for improved maintainability and caching.
 
-![Version](https://img.shields.io/badge/version-2.9.0-blue)
+![Version](https://img.shields.io/badge/version-2.10.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -311,7 +311,7 @@ Generate secure, time-limited sharing links for friends and family.
 **How it Works:**
 1. Click "Share Live Location" button in dashboard
 2. Select member and duration (1h, 4h, 8h, or 24h)
-3. Copy the generated link
+3. Copy the generated link (or share directly via mobile share dialog)
 4. Recipients see your location on a map without needing your API keys
 
 **Technical Details:**

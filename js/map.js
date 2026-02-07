@@ -3,7 +3,7 @@
 /**
  * @fileoverview Map rendering with dual engine support (Leaflet/MapLibre).
  * @module js/map
- * @version 2.10.1
+ * @version 2.10.2
  */
 
 import { MEMBER_COLORS, getMemberColorByIndex, calculateDistance, formatDateTime } from './utils.js';

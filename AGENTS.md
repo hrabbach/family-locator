@@ -66,6 +66,7 @@ The tool uses the following endpoint:
 - **v2.8.5**: Validated and expanded API time range parameters (`start_at`) to ensure last known location is retrieved even if old.
 - **v2.8.9**: Implemented automated version management system with centralized version control via package.json and automated propagation to all files.
 - **v2.9.0**: **Major Refactoring** - Restructured monolithic 2,640-line app.js into 8 focused ES6 modules (~2,380 lines total) for improved maintainability and caching:
+- **v2.10.2**: Added native mobile share integration for location sharing links.
   - **js/utils.js** (110 lines): Helper functions, distance calculations, HTML escaping, formatting
   - **js/config.js** (305 lines): Configuration management, validation, URL processing
   - **js/geocoding.js** (205 lines): Address resolution with Photon API
@@ -84,6 +85,6 @@ The tool uses the following endpoint:
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.9.0
+### Current Version: v2.10.2
 
 

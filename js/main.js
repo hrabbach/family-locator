@@ -4,7 +4,7 @@
  * @fileoverview Main application entry point.
  * Orchestrates all modules and handles application initialization.
  * @module js/main
- * @version 2.10.1
+ * @version 2.10.2
  */
 
 // ==========================================
@@ -743,6 +743,19 @@ function setupEventListeners() {
                     let link = `${window.location.origin}${window.location.pathname}?token=${data.token}`;
                     elements.shareLinkInput.value = link;
                     elements.generatedLinkContainer.style.display = 'block';
+
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: 'Track my location',
+                                text: `Track my location on ${name}'s Family Locator`,
+                                url: link
+                            });
+                            console.log('Shared successfully');
+                        } catch (err) {
+                            console.log('Error sharing:', err);
+                        }
+                    }
                 } else {
                     alert("Failed to generate link.");
                 }
@@ -921,7 +934,7 @@ function init() {
         updateUI: (data) => {
             // Re-render UI with current state
             const combinedData = { locations: [...lastLocations, ...sharedLocations] };
-            updateUI(combinedData, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
+            updateUI(combined, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
             if (elements.mapView.classList.contains('active')) {
                 updateMapMarkers();
             }
