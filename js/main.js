@@ -299,20 +299,38 @@ async function fetchOwnerLocation(config) {
     }
 
     try {
+        // Fetch last point for the API key owner
+        // We use a very old start date to ensure we find the last point
+        const params = new URLSearchParams({
+            api_key: config.apiKey,
+            start_at: '2000-01-01',
+            per_page: '1',
+            order: 'desc'
+        });
+
         const response = await fetchWithRetry(
-            `${config.baseUrl}/api/v1/users/${encodeURIComponent(config.apiUserName)}/points/latest?api_key=${config.apiKey}`
+            `${config.baseUrl}/api/v1/points?${params.toString()}`
         );
+
         if (response.ok) {
             const data = await response.json();
-            if (data.point) {
+            // API returns array of points
+            let point = null;
+            if (Array.isArray(data) && data.length > 0) {
+                point = data[0];
+            } else if (data.points && Array.isArray(data.points) && data.points.length > 0) {
+                point = data.points[0];
+            }
+
+            if (point) {
                 const loc = {
                     email: 'OWNER',
-                    latitude: data.point.latitude,
-                    lon: data.point.longitude,
-                    lat: data.point.latitude,
-                    longitude: data.point.longitude,
-                    battery: data.point.battery,
-                    timestamp: data.point.timestamp,
+                    latitude: point.latitude,
+                    lon: point.longitude,
+                    lat: point.latitude,
+                    longitude: point.longitude,
+                    battery: point.battery,
+                    timestamp: point.timestamp,
                     address: null
                 };
                 if (config.fixedLat && config.fixedLon) {
@@ -324,6 +342,7 @@ async function fetchOwnerLocation(config) {
                 setOwnerLocation(null);
             }
         } else {
+            console.warn('Owner location fetch failed:', response.status);
             setOwnerLocation(null);
         }
     } catch (error) {
