@@ -2068,7 +2068,7 @@ async function updateMapMarkers() {
         <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(titleText)}</span>
-                <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${secondsToRefresh}s)</span>
+                <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;"></span>
             </div>
             <div id="sharedExpiryCountdown" style="font-size: 0.75rem; color: var(--warning-color); display: none;"></div>
         </div>
