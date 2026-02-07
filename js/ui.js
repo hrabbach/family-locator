@@ -239,7 +239,7 @@ export function saveModalName(currentEditingEmail, getConfigFn, invalidateConfig
 // Main UI Update Function
 // ==========================================
 
-export function updateUI(data, getConfigFn, serverConfigured, selectedMemberEmails, ownerLocation, userLocation) {
+export function updateUI(data, getConfigFn, serverConfigured, selectedMemberEmails, ownerLocation, userLocation, onShowMap) {
     if (!data.locations || !Array.isArray(data.locations)) return;
 
     const config = getConfigFn() || {};
@@ -255,7 +255,10 @@ export function updateUI(data, getConfigFn, serverConfigured, selectedMemberEmai
     }
     elements.viewSelectedBtn.style.display = hasSelection ? 'block' : 'none';
     elements.viewSelectedBtn.innerText = `View ${selectedMemberEmails.size} Selected on Map`;
-    elements.viewSelectedBtn.onclick = () => showMap();
+    elements.viewSelectedBtn.onclick = () => {
+        if (onShowMap) onShowMap();
+        else showMap();
+    };
 
     const container = elements.membersList;
     const existingNodes = new Map();

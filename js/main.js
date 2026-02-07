@@ -412,7 +412,10 @@ async function fetchData() {
             data.locations = [...data.locations, ...sharedLocations];
         }
 
-        updateUI(data, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
+        updateUI(data, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition, () => {
+            showMap();
+            fetchData();
+        });
 
         // Update map if active
         if (elements.mapView.classList.contains('active')) {
@@ -638,7 +641,10 @@ function setupEventListeners() {
         if (mapActionEl) {
             const email = mapActionEl.dataset.email;
             if (email) {
-                showSingleMemberMap(email, selectedMemberEmails, showMap);
+                showSingleMemberMap(email, selectedMemberEmails, () => {
+                    showMap();
+                    fetchData();
+                });
             }
             return;
         }
