@@ -132,9 +132,6 @@ export function showToast(message, duration = 3000) {
 // ==========================================
 
 export function updateCountdown(secondsToRefresh, sharedExpiresAt, elements) {
-    secondsToRefresh--;
-    if (secondsToRefresh < 0) secondsToRefresh = 10;
-
     const txt = `Refreshing in ${secondsToRefresh}s`;
     elements.refreshStatus.innerText = txt;
 

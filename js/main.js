@@ -266,7 +266,12 @@ function initSharedMode(token) {
     // Countdown
     clearInterval(countdownInterval);
     setSecondsToRefresh(10);
-    countdownInterval = setInterval(() => updateCountdown(secondsToRefresh, sharedExpiresAt, elements), 1000);
+    countdownInterval = setInterval(() => {
+        let newSeconds = secondsToRefresh - 1;
+        if (newSeconds < 0) newSeconds = 10;
+        setSecondsToRefresh(newSeconds);
+        updateCountdown(newSeconds, sharedExpiresAt, elements);
+    }, 1000);
 }
 
 function initMergeMode(token) {
@@ -348,7 +353,12 @@ function startTrackingWrapper() {
     clearInterval(countdownInterval);
 
     refreshInterval = setInterval(fetchData, 10000);
-    countdownInterval = setInterval(() => updateCountdown(secondsToRefresh, sharedExpiresAt, elements), 1000);
+    countdownInterval = setInterval(() => {
+        let newSeconds = secondsToRefresh - 1;
+        if (newSeconds < 0) newSeconds = 10;
+        setSecondsToRefresh(newSeconds);
+        updateCountdown(newSeconds, sharedExpiresAt, elements);
+    }, 1000);
 }
 
 function stopTrackingWrapper() {
