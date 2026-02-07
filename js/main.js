@@ -52,7 +52,8 @@ import {
     setLocationWatchId,
     setLocationTimeout,
     map,
-    userPosition
+    userPosition,
+    setOwnerLocation
 } from './state.js';
 import {
     loadMapEngine,
@@ -291,6 +292,46 @@ function initMergeMode(token) {
 let refreshInterval = null;
 let countdownInterval = null;
 
+async function fetchOwnerLocation(config) {
+    if (!config.apiUserName) {
+        setOwnerLocation(null);
+        return;
+    }
+
+    try {
+        const response = await fetchWithRetry(
+            `${config.baseUrl}/api/v1/users/${encodeURIComponent(config.apiUserName)}/points/latest?api_key=${config.apiKey}`
+        );
+        if (response.ok) {
+            const data = await response.json();
+            if (data.point) {
+                const loc = {
+                    email: 'OWNER',
+                    latitude: data.point.latitude,
+                    lon: data.point.longitude,
+                    lat: data.point.latitude,
+                    longitude: data.point.longitude,
+                    battery: data.point.battery,
+                    timestamp: data.point.timestamp,
+                    address: null
+                };
+                if (config.fixedLat && config.fixedLon) {
+                    loc.latitude = parseFloat(config.fixedLat);
+                    loc.longitude = parseFloat(config.fixedLon);
+                }
+                setOwnerLocation(loc);
+            } else {
+                setOwnerLocation(null);
+            }
+        } else {
+            setOwnerLocation(null);
+        }
+    } catch (error) {
+        console.error('Owner location fetch error:', error);
+        setOwnerLocation(null);
+    }
+}
+
 async function fetchData() {
     const config = getConfig();
     if (!config) return;
@@ -299,12 +340,16 @@ async function fetchData() {
     elements.refreshStatus.classList.add('refreshing');
 
     try {
+        const ownerFetchPromise = fetchOwnerLocation(config);
+
         const response = await fetchWithRetry(`${config.baseUrl}/api/v1/families/locations?api_key=${config.apiKey}`);
         if (!response.ok) throw new Error('API request failed');
 
         const data = await response.json();
         lastLocations.length = 0;
         lastLocations.push(...(data.locations || []));
+
+        await ownerFetchPromise;
 
         // Handle "ALL" selection
         if (selectedMemberEmails.has('ALL')) {
@@ -766,6 +811,21 @@ function init() {
     } else {
         showConfig();
     }
+
+    // Expose for geocoding callbacks
+    window.familyTracker = {
+        get lastLocations() { return lastLocations; },
+        get ownerLocation() { return ownerLocation; },
+        updateUI: (data) => {
+            // Re-render UI with current state
+            const combinedData = { locations: [...lastLocations, ...sharedLocations] };
+            updateUI(combinedData, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
+            if (elements.mapView.classList.contains('active')) {
+                updateMapMarkers();
+            }
+        },
+        getConfig
+    };
 }
 
 // ==========================================
