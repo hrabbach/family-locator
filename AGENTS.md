@@ -79,6 +79,7 @@ The tool uses the following endpoint:
   - Zero breaking changes - all features remain functional
 - **v2.10.2**: Added native mobile share integration for location sharing links.
 - **v2.10.3**: Implemented `showToast` notification system in `js/ui.js` and added corresponding styles in `style.css`.
+- **v2.10.4**: Fixed regression where settings screen inputs were not populated with current configuration.
 
 ### Recent Optimizations (by Jules)
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
@@ -86,6 +87,6 @@ The tool uses the following endpoint:
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.10.3
+### Current Version: v2.10.4
 
 
