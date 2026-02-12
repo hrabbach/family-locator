@@ -4,7 +4,7 @@
  * @fileoverview Main application entry point.
  * Orchestrates all modules and handles application initialization.
  * @module js/main
- * @version 2.10.2
+ * @version 2.10.3
  */
 
 // ==========================================

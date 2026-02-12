@@ -3,7 +3,7 @@
 /**
  * @fileoverview User interface management and DOM manipulation.
  * @module js/ui
- * @version 2.10.2
+ * @version 2.10.3
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';
@@ -123,8 +123,30 @@ export function closeModal(modalElement) {
 // ==========================================
 
 export function showToast(message, duration = 3000) {
-    // TODO: Implement toast notification system
-    console.log('Toast:', message);
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // Auto-remove after duration
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => {
+            toast.remove();
+            // Remove container if empty to keep DOM clean
+            if (container.childNodes.length === 0) {
+                container.remove();
+            }
+        }, 300); // Match CSS transition duration
+    }, duration);
 }
 
 // ==========================================

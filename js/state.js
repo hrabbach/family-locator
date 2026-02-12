@@ -4,7 +4,7 @@
  * @fileoverview Centralized application state management.
  * Prevents circular dependencies and provides single source of truth.
  * @module js/state
- * @version 2.9.0
+ * @version 2.10.3
  */
 
 // ==========================================

@@ -4,7 +4,7 @@
  * @fileoverview Configuration management for the Family Location Tracker.
  * Handles app configuration, validation, URL parameter processing, and config sharing.
  * @module js/config
- * @version 2.9.0
+ * @version 2.10.3
  */
 
 // ==========================================
