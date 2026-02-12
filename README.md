@@ -2,7 +2,7 @@
 
 A lightweight, self-hosted Progressive Web App (PWA) for tracking family members' locations using the Dawarich API. Built with modern ES6 module architecture for improved maintainability and caching.
 
-![Version](https://img.shields.io/badge/version-2.10.3-blue)
+![Version](https://img.shields.io/badge/version-2.10.4-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -546,4 +546,4 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ---
 
-**Version**: 2.10.3 | **Maintained by**: Holger Rabbach | **Repository**: [GitHub](https://github.com/hrabbach/family-locator)
+**Version**: 2.10.4 | **Maintained by**: Holger Rabbach | **Repository**: [GitHub](https://github.com/hrabbach/family-locator)

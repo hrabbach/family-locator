@@ -3,11 +3,11 @@
 /**
  * @fileoverview User interface management and DOM manipulation.
  * @module js/ui
- * @version 2.10.3
+ * @version 2.10.4
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';
-import { NAMES_KEY } from './config.js';
+import { NAMES_KEY, getConfig } from './config.js';
 import { lastKnownAddresses } from './geocoding.js';
 
 // ==========================================
@@ -94,6 +94,42 @@ export function showConfig() {
     elements.dashboardView.classList.remove('active');
     elements.mapView.classList.remove('active');
     elements.configView.classList.add('active');
+
+    const config = getConfig() || {};
+
+    // Basic Settings
+    if (elements.baseUrlInput) elements.baseUrlInput.value = config.baseUrl || '';
+    if (elements.apiKeyInput) elements.apiKeyInput.value = config.apiKey || '';
+    if (elements.apiUserNameInput) elements.apiUserNameInput.value = config.apiUserName || '';
+
+    // Map Settings
+    const engine = config.mapEngine || 'maplibre';
+    if (elements.mapEngineInput) elements.mapEngineInput.value = engine;
+    if (elements.mapStyleUrlInput) elements.mapStyleUrlInput.value = config.mapStyleUrl || '';
+    if (elements.mapStyleGroup) {
+        elements.mapStyleGroup.style.display = engine === 'maplibre' ? 'block' : 'none';
+    }
+
+    // Geocoding
+    const geocodeEnabled = !!config.geocodeEnabled;
+    if (elements.geocodeEnabled) elements.geocodeEnabled.checked = geocodeEnabled;
+    if (elements.photonUrl) elements.photonUrl.value = config.photonUrl || '';
+    if (elements.photonApiKey) elements.photonApiKey.value = config.photonApiKey || '';
+    if (elements.geocodeSettings) {
+        elements.geocodeSettings.style.display = geocodeEnabled ? 'block' : 'none';
+    }
+
+    // Power
+    if (elements.keepAwakeEnabled) elements.keepAwakeEnabled.checked = !!config.keepAwakeEnabled;
+
+    // Stationary
+    const isStationary = !!(config.fixedLat && config.fixedLon);
+    if (elements.stationaryEnabled) elements.stationaryEnabled.checked = isStationary;
+    if (elements.fixedLat) elements.fixedLat.value = config.fixedLat || '';
+    if (elements.fixedLon) elements.fixedLon.value = config.fixedLon || '';
+    if (elements.stationarySettings) {
+        elements.stationarySettings.style.display = isStationary ? 'block' : 'none';
+    }
 }
 
 export function showMap() {
