@@ -3,7 +3,7 @@
 /**
  * @fileoverview Reverse geocoding with queued requests and address caching.
  * @module js/geocoding
- * @version 2.9.0
+ * @version 2.10.3
  */
 
 // ==========================================
