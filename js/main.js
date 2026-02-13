@@ -945,7 +945,7 @@ function init() {
         updateUI: (data) => {
             // Re-render UI with current state
             const combinedData = { locations: [...lastLocations, ...sharedLocations] };
-            updateUI(combined, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
+            updateUI(combinedData, getConfig, serverConfigured, selectedMemberEmails, ownerLocation, userPosition);
             if (elements.mapView.classList.contains('active')) {
                 updateMapMarkers();
             }
