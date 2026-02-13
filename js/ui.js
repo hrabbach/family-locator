@@ -49,6 +49,8 @@ export const elements = {
 
     // Dashboard
     membersList: document.getElementById('membersList'),
+    membersListSkeleton: document.getElementById('membersListSkeleton'),
+    emptyState: document.getElementById('emptyState'),
     lastUpdated: document.getElementById('lastUpdated'),
     refreshStatus: document.getElementById('refreshStatus'),
 
@@ -365,6 +367,18 @@ export function updateUI(data, getConfigFn, serverConfigured, selectedMemberEmai
     // 4. Remove leftovers
     existingNodes.forEach(card => {
         card.remove();
+    });
+
+    if (elements.membersListSkeleton) elements.membersListSkeleton.style.display = "none";
+    if (elements.emptyState) {
+        if (newOrder.length === 0) {
+            elements.emptyState.style.display = "flex";
+            elements.membersList.style.display = "none";
+        } else {
+            elements.emptyState.style.display = "none";
+            elements.membersList.style.display = "block";
+        }
+    }
     });
 }
 

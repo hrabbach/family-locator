@@ -681,7 +681,19 @@ function setupEventListeners() {
             return;
         }
     });
-
+        // 4. Fallback: Card Click (Show Map)
+        const card = target.closest(".member-card");
+        if (card && !target.closest("input") && !target.closest("button")) {
+             const email = card.getAttribute("data-member-email");
+             const nameEl = card.querySelector(".member-display-name");
+             if (email && nameEl && nameEl.getAttribute("data-action") === "show-single-map") {
+                 showSingleMemberMap(email, selectedMemberEmails, () => {
+                    showMap();
+                    fetchData();
+                });
+             }
+        }
+    });
     // Map engine toggle
     elements.mapEngineInput.addEventListener('change', (e) => {
         elements.mapStyleGroup.style.display = e.target.value === 'maplibre' ? 'block' : 'none';
