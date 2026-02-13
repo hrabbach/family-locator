@@ -90,3 +90,4 @@ The tool uses the following endpoint:
 ### Current Version: v2.10.4
 
 
+- **v2.11.0**: Enhanced UI/UX with skeleton loading state, friendly empty state, clickable member cards, and refined map overlay with improved transitions.

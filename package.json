@@ -1,6 +1,6 @@
 {
   "name": "family-location-tracker",
-  "version": "2.10.4",
+  "version": "2.11.0",
   "scripts": {
     "update-version": "node update-version.js"
   },

@@ -16,11 +16,11 @@
         defer></script>
     <!-- Map Engines are loaded dynamically in app.js -->
 
-    <link rel="icon" type="image/png" href="./icon.png?v=2.10.4">
-    <link rel="stylesheet" href="./style.css?v=2.10.4">
-    <link rel="manifest" href="./manifest.json?v=2.10.4">
+    <link rel="icon" type="image/png" href="./icon.png?v=2.11.0">
+    <link rel="stylesheet" href="./style.css?v=2.11.0">
+    <link rel="manifest" href="./manifest.json?v=2.11.0">
     <meta name="theme-color" content="#1e293b">
-    <link rel="apple-touch-icon" href="./icon.png?v=2.10.4">
+    <link rel="apple-touch-icon" href="./icon.png?v=2.11.0">
 </head>
 
 <body>
@@ -144,6 +144,35 @@
                 </svg>
                 Share Live Location
             </button>
+            <!-- Skeleton Loader -->
+            <div id="membersListSkeleton">
+                <div class="member-card skeleton-card">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-text title"></div>
+                        <div class="skeleton-text subtitle"></div>
+                    </div>
+                </div>
+                <div class="member-card skeleton-card">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-text title"></div>
+                        <div class="skeleton-text subtitle"></div>
+                    </div>
+                </div>
+                <div class="member-card skeleton-card">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-text title"></div>
+                        <div class="skeleton-text subtitle"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Empty State -->
+            <div id="emptyState" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; color: var(--text-secondary); text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">👻</div>
+                <div>No members found yet.<br>Share your location link to invite family!</div>
+            </div>
             <div id="membersList">
                 <!-- Members will be injected here -->
             </div>
@@ -223,9 +252,9 @@
         </div>
     </div>
     <a href="https://github.com/hrabbach/family-locator" target="_blank" rel="noopener noreferrer"
-        class="version-tag">v2.10.4</a>
+        class="version-tag">v2.11.0</a>
 
-    <script type="module" src="./js/main.js?v=2.10.4"></script>
+    <script type="module" src="./js/main.js?v=2.11.0"></script>
 </body>
 
 </html>
