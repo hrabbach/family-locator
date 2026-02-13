@@ -379,7 +379,6 @@ export function updateUI(data, getConfigFn, serverConfigured, selectedMemberEmai
             elements.membersList.style.display = "block";
         }
     }
-    });
 }
 
 // ==========================================
