@@ -680,7 +680,6 @@ function setupEventListeners() {
             editName(email, getConfig, setCurrentEditingEmail);
             return;
         }
-    });
         // 4. Fallback: Card Click (Show Map)
         const card = target.closest(".member-card");
         if (card && !target.closest("input") && !target.closest("button")) {
