@@ -87,7 +87,8 @@ The tool uses the following endpoint:
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.10.4
+### Current Version: v2.11.1
 
 
 - **v2.11.0**: Enhanced UI/UX with skeleton loading state, friendly empty state, clickable member cards, and refined map overlay with improved transitions.
+- **v2.11.1**: Finalized Toast notification system and replaced all legacy alerts with modern toasts. Enhanced `showToast` to support different notification types (success, error, warning, info).

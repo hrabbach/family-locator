@@ -4,7 +4,7 @@
  * @fileoverview Main application entry point.
  * Orchestrates all modules and handles application initialization.
  * @module js/main
- * @version 2.10.3
+ * @version 2.11.1
  */
 
 // ==========================================
@@ -213,9 +213,11 @@ async function fetchSharedData() {
 
         if (response.status === 410) {
             if (isSharedMode) {
-                alert("This sharing link has expired.");
+                showToast("This sharing link has expired.", "error");
                 clearInterval(refreshInterval);
-                window.location.href = window.location.pathname;
+                setTimeout(() => {
+                    window.location.href = window.location.pathname;
+                }, 2000);
             } else {
                 console.log("Shared link expired");
             }
@@ -495,7 +497,7 @@ function saveConfig() {
     const fixedLonRaw = elements.fixedLon.value.trim();
 
     if (!baseUrlRaw || !apiKeyRaw) {
-        alert('Base URL and API Key are required');
+        showToast('Base URL and API Key are required', 'warning');
         return;
     }
 
@@ -509,14 +511,14 @@ function saveConfig() {
     try {
         new URL(baseUrl);
     } catch (e) {
-        alert('Invalid Base URL format');
+        showToast('Invalid Base URL format', 'error');
         return;
     }
 
     // Validate API Key (basic check)
     const apiKey = apiKeyRaw;
     if (apiKey.length < 10 || !/^[a-zA-Z0-9_-]+$/.test(apiKey)) {
-        alert('API Key format appears invalid');
+        showToast('API Key format appears invalid', 'error');
         return;
     }
 
@@ -528,7 +530,7 @@ function saveConfig() {
         try {
             new URL(mapStyleUrl);
         } catch (e) {
-            alert('Invalid Map Style URL format');
+            showToast('Invalid Map Style URL format', 'error');
             return;
         }
     }
@@ -543,7 +545,7 @@ function saveConfig() {
             try {
                 new URL(photonUrl);
             } catch (e) {
-                alert('Invalid Photon URL format');
+                showToast('Invalid Photon URL format', 'error');
                 return;
             }
         }
@@ -557,21 +559,21 @@ function saveConfig() {
     let fixedLon = null;
     if (stationaryEnabled) {
         if (!fixedLatRaw || !fixedLonRaw) {
-            alert('Both Latitude and Longitude are required for Stationary Mode');
+            showToast('Both Latitude and Longitude are required for Stationary Mode', 'warning');
             return;
         }
         fixedLat = parseFloat(fixedLatRaw);
         fixedLon = parseFloat(fixedLonRaw);
         if (isNaN(fixedLat) || isNaN(fixedLon)) {
-            alert('Latitude and Longitude must be valid numbers');
+            showToast('Latitude and Longitude must be valid numbers', 'error');
             return;
         }
         if (fixedLat < -90 || fixedLat > 90) {
-            alert('Latitude must be between -90 and 90');
+            showToast('Latitude must be between -90 and 90', 'error');
             return;
         }
         if (fixedLon < -180 || fixedLon > 180) {
-            alert('Longitude must be between -180 and 180');
+            showToast('Longitude must be between -180 and 180', 'error');
             return;
         }
     }
@@ -630,7 +632,14 @@ function setupEventListeners() {
     });
 
     // Share config via URL
-    elements.shareConfigBtn.addEventListener('click', () => copyConfigUrl(elements.shareStatus));
+    elements.shareConfigBtn.addEventListener('click', async () => {
+        const success = await copyConfigUrl(elements.shareStatus);
+        if (success) {
+            showToast('Configuration URL copied to clipboard!', 'success');
+        } else {
+            showToast('Failed to copy configuration URL', 'error');
+        }
+    });
 
     // Geocode toggle
     elements.geocodeEnabled.addEventListener('change', (e) => {
@@ -768,11 +777,11 @@ function setupEventListeners() {
                         }
                     }
                 } else {
-                    alert("Failed to generate link.");
+                    showToast("Failed to generate link.", "error");
                 }
             } catch (e) {
                 console.error(e);
-                alert("Error connecting to server.");
+                showToast("Error connecting to server.", "error");
             }
         });
     }
@@ -784,6 +793,7 @@ function setupEventListeners() {
             const originalText = elements.copyShareLinkBtn.innerText;
             elements.copyShareLinkBtn.innerText = 'Copied!';
             setTimeout(() => elements.copyShareLinkBtn.innerText = originalText, 2000);
+            showToast('Link copied to clipboard!', 'success');
         });
     }
 }
@@ -807,7 +817,7 @@ async function startScan() {
         );
     } catch (err) {
         console.error("Camera error:", err);
-        alert("Unable to start camera. Please check permissions.");
+        showToast("Unable to start camera. Please check permissions.", "error");
         stopScan();
     }
 }
@@ -843,7 +853,7 @@ function onScanSuccess(decodedText) {
         const data = JSON.parse(decodedText);
 
         if (!data.server_url || !data.api_key) {
-            alert("Invalid QR Code format. Missing server_url or api_key.");
+            showToast("Invalid QR Code format. Missing server_url or api_key.", "error");
             return;
         }
 
@@ -854,13 +864,13 @@ function onScanSuccess(decodedText) {
         elements.apiKeyInput.value = validatedKey;
 
         stopScan();
-        alert("QR Code scanned successfully! Please enter your name (optional) and click 'Start Tracking'.");
+        showToast("QR Code scanned successfully!", "success");
 
     } catch (error) {
         if (error instanceof SyntaxError) {
-            alert("Invalid QR Code. Could not parse JSON.");
+            showToast("Invalid QR Code. Could not parse JSON.", "error");
         } else {
-            alert(`Invalid QR Code: ${error.message}`);
+            showToast(`Invalid QR Code: ${error.message}`, "error");
         }
         console.error('QR code validation error:', error);
     }
@@ -871,7 +881,7 @@ function onScanSuccess(decodedText) {
 // ==========================================
 
 function init() {
-    console.log('Family Location Tracker v2.10.0 - ES6 Modules');
+    console.log('Family Location Tracker v2.11.1 - ES6 Modules');
 
     registerServiceWorker();
     setupEventListeners();

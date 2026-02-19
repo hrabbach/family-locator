@@ -3,7 +3,7 @@
 /**
  * @fileoverview User interface management and DOM manipulation.
  * @module js/ui
- * @version 2.10.4
+ * @version 2.11.1
  */
 
 import { escapeHtml, formatRelativeTime, getBatteryClass, getMemberColor, getMemberColorByIndex, calculateDistance } from './utils.js';
@@ -157,10 +157,10 @@ export function closeModal(modalElement) {
 }
 
 // ==========================================
-// Notifications/Toasts - TODO
+// Notifications/Toasts
 // ==========================================
 
-export function showToast(message, duration = 3000) {
+export function showToast(message, type = 'info', duration = 3000) {
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -170,7 +170,7 @@ export function showToast(message, duration = 3000) {
     }
 
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = `toast ${type}`;
     toast.textContent = message;
     container.appendChild(toast);
 
