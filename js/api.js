@@ -3,7 +3,7 @@
 /**
  * @fileoverview API communication with retry logic and polling.
  * @module js/api
- * @version 2.10.3
+ * @version 2.11.1
  */
 
 import { getConfig } from './config.js';

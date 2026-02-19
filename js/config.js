@@ -4,7 +4,7 @@
  * @fileoverview Configuration management for the Family Location Tracker.
  * Handles app configuration, validation, URL parameter processing, and config sharing.
  * @module js/config
- * @version 2.10.3
+ * @version 2.11.1
  */
 
 // ==========================================
@@ -280,29 +280,39 @@ export function generateConfigUrl() {
 export async function copyConfigUrl(shareStatusElement) {
     const url = generateConfigUrl();
     if (!url) {
-        alert("No configuration to share. Please set up the app first.");
-        return;
+        return false;
     }
 
     try {
         await navigator.clipboard.writeText(url);
-        shareStatusElement.style.opacity = '1';
-        setTimeout(() => {
-            shareStatusElement.style.opacity = '0';
-        }, 2000);
+        if (shareStatusElement) {
+            shareStatusElement.style.opacity = '1';
+            setTimeout(() => {
+                shareStatusElement.style.opacity = '0';
+            }, 2000);
+        }
+        return true;
     } catch (err) {
         console.error("Failed to copy URL", err);
         // Fallback for non-secure contexts or some mobile browsers
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
+        try {
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
 
-        shareStatusElement.style.opacity = '1';
-        setTimeout(() => {
-            shareStatusElement.style.opacity = '0';
-        }, 2000);
+            if (shareStatusElement) {
+                shareStatusElement.style.opacity = '1';
+                setTimeout(() => {
+                    shareStatusElement.style.opacity = '0';
+                }, 2000);
+            }
+            return true;
+        } catch (fallbackErr) {
+            console.error("Fallback copy failed", fallbackErr);
+            return false;
+        }
     }
 }

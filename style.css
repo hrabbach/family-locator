@@ -849,6 +849,7 @@ button.duration-btn.is-selected {
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
     color: var(--text-primary);
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -859,6 +860,22 @@ button.duration-btn.is-selected {
     text-align: center;
     font-size: 0.9rem;
     font-weight: 500;
+}
+
+.toast.success {
+    border-left-color: var(--success-color);
+}
+
+.toast.error {
+    border-left-color: var(--danger-color);
+}
+
+.toast.warning {
+    border-left-color: var(--warning-color);
+}
+
+.toast.info {
+    border-left-color: var(--accent-color);
 }
 
 .toast.hiding {
