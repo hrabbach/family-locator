@@ -95,8 +95,10 @@ setInterval(() => {
             locationCache.delete(key);
         }
     }
-    // Limit address cache size if needed, but for now it's simple
-    if (addressCache.size > 1000) addressCache.clear();
+    // Limit address cache size - using LRU eviction (Map keeps insertion order)
+    while (addressCache.size > 1000) {
+        addressCache.delete(addressCache.keys().next().value);
+    }
 }, 60 * 1000);
 
 // Helper to resolve address
@@ -107,7 +109,11 @@ const resolveAddress = async (lat, lon) => {
     const key = `${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`;
 
     if (addressCache.has(key)) {
-        return addressCache.get(key);
+        const cachedAddress = addressCache.get(key);
+        // Move to the end to maintain LRU order
+        addressCache.delete(key);
+        addressCache.set(key, cachedAddress);
+        return cachedAddress;
     }
 
     try {

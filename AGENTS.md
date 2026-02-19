@@ -90,5 +90,6 @@ The tool uses the following endpoint:
 ### Current Version: v2.11.1
 
 
+- **v2.11.1**: Optimized server-side address caching with LRU eviction policy to improve hit rate and reduce redundant reverse geocoding API calls.
 - **v2.11.0**: Enhanced UI/UX with skeleton loading state, friendly empty state, clickable member cards, and refined map overlay with improved transitions.
 - **v2.11.1**: Finalized Toast notification system and replaced all legacy alerts with modern toasts. Enhanced `showToast` to support different notification types (success, error, warning, info).
