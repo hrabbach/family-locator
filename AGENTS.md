@@ -87,7 +87,8 @@ The tool uses the following endpoint:
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.10.4
+### Current Version: v2.11.1
 
 
+- **v2.11.1**: Optimized server-side address caching with LRU eviction policy to improve hit rate and reduce redundant reverse geocoding API calls.
 - **v2.11.0**: Enhanced UI/UX with skeleton loading state, friendly empty state, clickable member cards, and refined map overlay with improved transitions.
