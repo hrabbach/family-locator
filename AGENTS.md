@@ -82,6 +82,7 @@ The tool uses the following endpoint:
 - **v2.10.4**: Fixed regression where settings screen inputs were not populated with current configuration.
 
 ### Recent Optimizations (by Jules)
+- **Performance**: Replaced synchronous JWT verification with asynchronous implementation in the Node.js server, preventing event loop blocking and improving throughput.
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.

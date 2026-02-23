@@ -1,5 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const util = require('util');
+const verifyAsync = util.promisify(jwt.verify);
 const crypto = require('crypto');
 const cors = require('cors');
 
@@ -41,7 +43,7 @@ const shareLimiter = rateLimit({
 // Rate limiter for location fetching (more lenient to allow frequent polling)
 const locationLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // Allow up to 100 requests per minute (every 600ms)
+    max: process.env.LOCATION_RATE_LIMIT_MAX ? parseInt(process.env.LOCATION_RATE_LIMIT_MAX) : 100,
     message: 'Too many location requests, please slow down',
     standardHeaders: true,
     legacyHeaders: false,
@@ -202,7 +204,7 @@ app.get('/api/shared/location', locationLimiter, checkConfig, async (req, res) =
 
     try {
         // Security: Validate token BEFORE serving cache
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = await verifyAsync(token, JWT_SECRET);
 
         // Only check cache for valid tokens
         if (locationCache.has(token)) {
