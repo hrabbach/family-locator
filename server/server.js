@@ -4,8 +4,10 @@ const util = require('util');
 const verifyAsync = util.promisify(jwt.verify);
 const crypto = require('crypto');
 const cors = require('cors');
+const compression = require('compression');
 
 const app = express();
+app.use(compression());
 app.use(express.json());
 
 // Security: Restrict CORS to allowed origins

@@ -86,11 +86,13 @@ The tool uses the following endpoint:
 - **Safety**: Robust HTML escaping (`escapeHtml`) implemented across all UI rendering components to prevent potential XSS vulnerabilities.
 - **Performance**: Parallelized API fetching for owner location and family data, significantly reducing initial load and refresh times.
 - **Performance**: Implemented a request queue for reverse geocoding to batch and rate-limit API calls, preventing burst traffic and improving reliability.
+- **Performance**: Enabled Gzip/Brotli compression in the Node.js server to reduce response sizes by up to 94% and improve delivery speed.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.11.1
+### Current Version: v2.12.1
 
 
+- **v2.12.1**: Implemented HTTP response compression (Gzip) for the API server, significantly reducing bandwidth consumption and improving perceived latency.
 - **v2.11.1**: Optimized server-side address caching with LRU eviction policy to improve hit rate and reduce redundant reverse geocoding API calls.
 - **v2.11.0**: Enhanced UI/UX with skeleton loading state, friendly empty state, clickable member cards, and refined map overlay with improved transitions.
 - **v2.11.1**: Finalized Toast notification system and replaced all legacy alerts with modern toasts. Enhanced `showToast` to support different notification types (success, error, warning, info).
