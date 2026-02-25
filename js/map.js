@@ -644,10 +644,30 @@ export async function updateMapMarkers(
 
     // Unified Map Overlay
     const header = document.querySelector('.map-header');
-    header.innerHTML = ''; // Clear previous
 
-    const card = document.createElement('div');
-    card.className = 'map-unified-card';
+    // Optimized: Check if card exists
+    let card = header.querySelector('.map-unified-card');
+
+    if (!card) {
+        card = document.createElement('div');
+        card.className = 'map-unified-card';
+        header.appendChild(card);
+        // Initial structure
+        card.innerHTML = `
+            <div class="map-card-header"></div>
+            <div class="map-card-body"></div>
+            <div class="map-card-footer"></div>
+        `;
+    } else {
+        // Ensure structure is correct
+        if (card.children.length !== 3) {
+             card.innerHTML = `
+                <div class="map-card-header"></div>
+                <div class="map-card-body"></div>
+                <div class="map-card-footer"></div>
+            `;
+        }
+    }
 
     // 1. Collect all users to show
     const usersToShow = [];
@@ -683,146 +703,246 @@ export async function updateMapMarkers(
     });
 
     // Toggle chevron
-    const chevronRotation = isMapOverlayCollapsed ? '-90deg' : '0deg';
-    const chevron = `<span style="font-size: 0.8rem; transform: rotate(${chevronRotation}); transition: transform 0.2s;">▼</span>`;
+    const cardHeader = card.children[0];
+    const cardBody = card.children[1];
+    const cardFooter = card.children[2];
 
-    // 2. Build Card Content
-    // Header
+    // --- 1. Header Update ---
     const titleText = usersToShow.length === 1
         ? usersToShow[0].name
         : `Tracking ${usersToShow.length} Members`;
 
-    const cardHeader = document.createElement('div');
-    cardHeader.className = 'map-card-header';
-    cardHeader.innerHTML = `
-        <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlFn(titleText)}</span>
-                <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;"></span>
+    // Ensure header content structure
+    if (!cardHeader.hasChildNodes()) {
+         cardHeader.innerHTML = `
+            <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="header-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                    <span id="mapReloadCountdown" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;"></span>
+                </div>
+                <div id="sharedExpiryCountdown" style="font-size: 0.75rem; color: var(--warning-color); display: none;"></div>
             </div>
-            <div id="sharedExpiryCountdown" style="font-size: 0.75rem; color: var(--warning-color); display: none;"></div>
-        </div>
-        ${usersToShow.length > 1 ? chevron : ''}
-    `;
+        `;
+    }
 
-    // Body (List of users)
-    const cardBody = document.createElement('div');
-    cardBody.className = 'map-card-body' + (isMapOverlayCollapsed ? ' collapsed' : '');
+    const titleSpan = cardHeader.querySelector('.header-title');
+    if (titleSpan && titleSpan.textContent !== titleText) {
+        titleSpan.textContent = titleText;
+    }
+
+    // Chevron Logic
+    let chevronContainer = null;
+    if (cardHeader.lastElementChild && cardHeader.lastElementChild.classList.contains('chevron-container')) {
+        chevronContainer = cardHeader.lastElementChild;
+    }
+
+    if (usersToShow.length > 1) {
+        const chevronRotation = isMapOverlayCollapsed ? '-90deg' : '0deg';
+
+        if (!chevronContainer) {
+             const div = document.createElement('div');
+             div.className = 'chevron-container';
+             div.innerHTML = `<span style="font-size: 0.8rem; transform: rotate(${chevronRotation}); transition: transform 0.2s;">▼</span>`;
+             cardHeader.appendChild(div);
+             chevronContainer = div;
+
+             // Add listener
+             cardHeader.onclick = () => {
+                isMapOverlayCollapsed = !isMapOverlayCollapsed;
+                const body = card.querySelector('.map-card-body');
+                const ch = cardHeader.querySelector('.chevron-container span');
+
+                if (isMapOverlayCollapsed) {
+                    if (body) body.classList.add('collapsed');
+                    if (ch) ch.style.transform = 'rotate(-90deg)';
+                } else {
+                    if (body) body.classList.remove('collapsed');
+                    if (ch) ch.style.transform = 'rotate(0deg)';
+                }
+            };
+            cardHeader.style.cursor = 'pointer';
+        } else {
+            // Update existing chevron
+            const ch = chevronContainer.querySelector('span');
+            if(ch) ch.style.transform = `rotate(${chevronRotation})`;
+        }
+    } else {
+        // Remove chevron if present
+        if (chevronContainer) {
+            chevronContainer.remove();
+            cardHeader.onclick = null;
+            cardHeader.style.cursor = 'default';
+        }
+    }
+
+    // --- 2. Body Update ---
+    if (isMapOverlayCollapsed) {
+        if (!cardBody.classList.contains('collapsed')) cardBody.classList.add('collapsed');
+    } else {
+        if (cardBody.classList.contains('collapsed')) cardBody.classList.remove('collapsed');
+    }
 
     if (usersToShow.length === 0) {
         cardBody.innerHTML = `<div class="map-member-row" style="justify-content: center; color: var(--text-secondary);">No members selected</div>`;
     } else {
+        if (cardBody.firstElementChild && cardBody.firstElementChild.innerText === 'No members selected') {
+            cardBody.innerHTML = '';
+        }
+
+        const existingRows = Array.from(cardBody.children);
+        const existingMap = new Map();
+        existingRows.forEach(row => {
+            if (row.dataset.email) existingMap.set(row.dataset.email, row);
+        });
+
+        const seenEmails = new Set();
+
         usersToShow.forEach(u => {
-            const timeStr = formatRelativeTimeFn(u.timestamp);
-            const row = document.createElement('div');
-            row.className = `map-member-row ${u.isOwner ? 'is-owner' : ''}`;
-            row.innerHTML = `
-                <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : u.color}; color: #333;">${escapeHtmlFn(u.initial)}</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${escapeHtmlFn(u.name)}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                        ${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${escapeHtmlFn(timeStr)}
+            seenEmails.add(u.email);
+            let row = existingMap.get(u.email);
+
+            if (!row) {
+                row = document.createElement('div');
+                row.className = `map-member-row ${u.isOwner ? 'is-owner' : ''}`;
+                row.dataset.email = u.email;
+                row.innerHTML = `
+                    <div class="avatar-small" style="background: ${u.isOwner ? '#ffd700' : u.color}; color: #333;">${escapeHtmlFn(u.initial)}</div>
+                    <div style="flex: 1;">
+                        <div class="user-name" style="font-weight: 500; font-size: 0.9rem; color: ${u.isOwner ? '#ffd700' : 'var(--text-primary)'}">${escapeHtmlFn(u.name)}</div>
+                        <div class="user-details" style="font-size: 0.75rem; color: var(--text-secondary);">
+                            ${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${escapeHtmlFn(formatRelativeTimeFn(u.timestamp))}
+                        </div>
                     </div>
-                </div>
-            `;
-            cardBody.appendChild(row);
-        });
-    }
-
-    // Footer (Toggle + Controls)
-    const cardFooter = document.createElement('div');
-    cardFooter.className = 'map-card-footer';
-
-    // Show My Location Toggle
-    const toggleContainer = document.createElement('div');
-    if (!showOwnerLocation) {
-        toggleContainer.style.display = 'flex';
-        toggleContainer.style.alignItems = 'center';
-        toggleContainer.style.gap = '0.5rem';
-
-        const switchLabel = document.createElement('label');
-        switchLabel.className = 'switch';
-        switchLabel.style.transform = 'scale(0.8)';
-        switchLabel.appendChild(elementsRef.toggleProximity); // Re-attach existing element
-        const slider = document.createElement('span');
-        slider.className = 'slider round';
-        switchLabel.appendChild(slider);
-
-        toggleContainer.appendChild(switchLabel);
-        toggleContainer.appendChild(elementsRef.distanceBadge);
-
-        // Label text
-        const label = document.createElement('span');
-        label.innerText = "Me";
-        label.style.fontSize = '0.85rem';
-        label.style.fontWeight = '500';
-        toggleContainer.appendChild(label);
-    }
-
-    // Buttons
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.style.display = 'flex';
-    buttonsContainer.style.gap = '0.5rem';
-
-    // Dynamic Buttons creation
-    const recenterBtn = document.createElement('button');
-    recenterBtn.id = 'dynamicRecenterBtn'; // stable ID for listeners
-    recenterBtn.innerText = 'Recenter';
-    recenterBtn.className = 'edit-name-btn'; // reuse style
-    recenterBtn.style.padding = '0.3rem 0.8rem';
-    recenterBtn.style.fontSize = '0.8rem';
-    recenterBtn.style.background = 'var(--accent-color)';
-    recenterBtn.style.color = 'white';
-    recenterBtn.style.display = isAutoCenterEnabled ? 'none' : 'block'; // Set initial state
-    recenterBtn.onclick = () => {
-        recenterMap(() => {
-            updateMapMarkers(
-                lastLocations, selectedMemberEmails, ownerLocation, userLocation,
-                isSharedMode, sharedStyleUrl, sharedLocations, showOwnerLocation,
-                proximityEnabled, secondsToRefresh, sharedExpiresAt, elementsRef, formatRelativeTimeFn,
-                escapeHtmlFn, updateCountdownFn, onCloseFn
-            );
-        });
-        recenterBtn.style.display = 'none';
-    };
-
-    buttonsContainer.appendChild(recenterBtn);
-
-    if (!isSharedMode) {
-        const closeBtn = document.createElement('button');
-        closeBtn.innerText = 'Close'; // Renamed to simple "Close"
-        closeBtn.className = 'edit-name-btn';
-        closeBtn.style.padding = '0.3rem 1rem';
-        closeBtn.style.fontSize = '0.8rem';
-        closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; // Better contrast
-        closeBtn.style.color = 'var(--text-primary)';
-        closeBtn.onclick = () => {
-            if (onCloseFn) onCloseFn();
-            else closeMap();
-        };
-        buttonsContainer.appendChild(closeBtn);
-    }
-
-    cardFooter.appendChild(toggleContainer);
-    cardFooter.appendChild(buttonsContainer);
-
-    card.appendChild(cardHeader);
-    card.appendChild(cardBody);
-    card.appendChild(cardFooter);
-    header.appendChild(card);
-
-    // Toggle Collapse Logic
-    if (usersToShow.length > 1) {
-        cardHeader.onclick = () => {
-            isMapOverlayCollapsed = !isMapOverlayCollapsed;
-            if (isMapOverlayCollapsed) {
-                cardBody.classList.add('collapsed');
-                cardHeader.querySelector('span:last-child').style.transform = 'rotate(-90deg)';
+                `;
+                cardBody.appendChild(row);
             } else {
-                cardBody.classList.remove('collapsed');
-                cardHeader.querySelector('span:last-child').style.transform = 'rotate(0deg)';
+                // Update content
+                const timeStr = formatRelativeTimeFn(u.timestamp);
+
+                // Avatar
+                const avatar = row.children[0];
+                if (avatar) {
+                    avatar.style.background = u.isOwner ? '#ffd700' : u.color;
+                    avatar.textContent = u.initial;
+                }
+
+                // Name
+                const nameDiv = row.children[1].children[0];
+                if (nameDiv) {
+                   nameDiv.style.color = u.isOwner ? '#ffd700' : 'var(--text-primary)';
+                   nameDiv.textContent = u.name;
+                }
+
+                // Details
+                const detailsDiv = row.children[1].children[1];
+                if (detailsDiv) {
+                    const newDetails = `${u.battery >= 0 ? `Bat: ${u.battery}% • ` : ''}${escapeHtmlFn(timeStr)}`;
+                    if (detailsDiv.innerHTML !== newDetails) {
+                         detailsDiv.innerHTML = newDetails;
+                    }
+                }
+
+                // Class
+                if (u.isOwner) {
+                    if (!row.classList.contains('is-owner')) row.classList.add('is-owner');
+                } else {
+                    if (row.classList.contains('is-owner')) row.classList.remove('is-owner');
+                }
+
+                cardBody.appendChild(row); // Reorder
             }
+        });
+
+        // Remove old
+        for (const [email, row] of existingMap) {
+            if (!seenEmails.has(email)) {
+                row.remove();
+            }
+        }
+    }
+
+    // --- 3. Footer Update ---
+    const hasToggle = cardFooter.querySelector('.switch');
+    const needsToggle = !showOwnerLocation;
+
+    if ((needsToggle && !hasToggle) || (!needsToggle && hasToggle)) {
+        cardFooter.innerHTML = '';
+    }
+
+    if (!cardFooter.hasChildNodes()) {
+         // Build footer structure
+        const toggleContainer = document.createElement('div');
+        if (needsToggle) {
+            toggleContainer.style.display = 'flex';
+            toggleContainer.style.alignItems = 'center';
+            toggleContainer.style.gap = '0.5rem';
+
+            const switchLabel = document.createElement('label');
+            switchLabel.className = 'switch';
+            switchLabel.style.transform = 'scale(0.8)';
+            switchLabel.appendChild(elementsRef.toggleProximity);
+            const slider = document.createElement('span');
+            slider.className = 'slider round';
+            switchLabel.appendChild(slider);
+
+            toggleContainer.appendChild(switchLabel);
+            toggleContainer.appendChild(elementsRef.distanceBadge);
+
+            const label = document.createElement('span');
+            label.innerText = "Me";
+            label.style.fontSize = '0.85rem';
+            label.style.fontWeight = '500';
+            toggleContainer.appendChild(label);
+        }
+        cardFooter.appendChild(toggleContainer);
+
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.gap = '0.5rem';
+
+        const recenterBtn = document.createElement('button');
+        recenterBtn.id = 'dynamicRecenterBtn';
+        recenterBtn.innerText = 'Recenter';
+        recenterBtn.className = 'edit-name-btn';
+        recenterBtn.style.padding = '0.3rem 0.8rem';
+        recenterBtn.style.fontSize = '0.8rem';
+        recenterBtn.style.background = 'var(--accent-color)';
+        recenterBtn.style.color = 'white';
+
+        recenterBtn.onclick = () => {
+            recenterMap(() => {
+                updateMapMarkers(
+                    lastLocations, selectedMemberEmails, ownerLocation, userLocation,
+                    isSharedMode, sharedStyleUrl, sharedLocations, showOwnerLocation,
+                    proximityEnabled, secondsToRefresh, sharedExpiresAt, elementsRef, formatRelativeTimeFn,
+                    escapeHtmlFn, updateCountdownFn, onCloseFn
+                );
+            });
+            recenterBtn.style.display = 'none';
         };
+        buttonsContainer.appendChild(recenterBtn);
+
+        if (!isSharedMode) {
+            const closeBtn = document.createElement('button');
+            closeBtn.innerText = 'Close';
+            closeBtn.className = 'edit-name-btn';
+            closeBtn.style.padding = '0.3rem 1rem';
+            closeBtn.style.fontSize = '0.8rem';
+            closeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            closeBtn.style.color = 'var(--text-primary)';
+            closeBtn.onclick = () => {
+                if (onCloseFn) onCloseFn();
+                else closeMap();
+            };
+            buttonsContainer.appendChild(closeBtn);
+        }
+        cardFooter.appendChild(buttonsContainer);
+    }
+
+    // Dynamic Footer Updates (Recenter Btn)
+    const rBtn = cardFooter.querySelector('#dynamicRecenterBtn');
+    if (rBtn) {
+        rBtn.style.display = isAutoCenterEnabled ? 'none' : 'block';
     }
 
     if (isAutoCenterEnabled && hasMarkers) {
