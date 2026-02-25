@@ -4,7 +4,7 @@
  * @fileoverview Utility functions for the Family Location Tracker.
  * Provides helper functions for calculations, formatting, and UI utilities.
  * @module js/utils
- * @version 2.11.1
+ * @version 2.12.1
  */
 
 // ==========================================
