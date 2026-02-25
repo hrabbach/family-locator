@@ -2,7 +2,7 @@
 
 A lightweight, self-hosted Progressive Web App (PWA) for tracking family members' locations using the Dawarich API. Built with modern ES6 module architecture for improved maintainability and caching.
 
-![Version](https://img.shields.io/badge/version-2.11.1-blue)
+![Version](https://img.shields.io/badge/version-2.12.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---

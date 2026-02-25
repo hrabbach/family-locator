@@ -3,7 +3,7 @@
 /**
  * @fileoverview Reverse geocoding with queued requests and address caching.
  * @module js/geocoding
- * @version 2.11.1
+ * @version 2.12.0
  */
 
 // ==========================================
@@ -118,27 +118,27 @@ export async function processGeocodeQueue() {
     while (geocodeQueue.length > 0) {
         const task = geocodeQueue.shift();
         await performGeocodeFetch(task.lat, task.lon, task.config);
+
+        // Update addresses and UI incrementally
+        if (window.familyTracker?.lastLocations && window.familyTracker.lastLocations.length > 0) {
+            window.familyTracker.lastLocations.forEach(m => {
+                m.address = resolveAddress(m);
+            });
+        }
+        if (window.familyTracker?.ownerLocation) {
+            window.familyTracker.ownerLocation.address = resolveAddress(window.familyTracker.ownerLocation);
+        }
+
+        // Update UI to show the new addresses
+        if (window.familyTracker?.updateUI) {
+            window.familyTracker.updateUI({ locations: window.familyTracker.lastLocations });
+        }
+
         if (geocodeQueue.length > 0) {
             await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
         }
     }
     geocodeProcessing = false;
-
-    // Re-resolve addresses now that cache is updated
-    // This will populate lastKnownAddresses with the newly geocoded values
-    if (window.familyTracker?.lastLocations && window.familyTracker.lastLocations.length > 0) {
-        window.familyTracker.lastLocations.forEach(m => {
-            m.address = resolveAddress(m);
-        });
-    }
-    if (window.familyTracker?.ownerLocation) {
-        window.familyTracker.ownerLocation.address = resolveAddress(window.familyTracker.ownerLocation);
-    }
-
-    // Update UI to show the new addresses
-    if (window.familyTracker?.updateUI) {
-        window.familyTracker.updateUI({ locations: window.familyTracker.lastLocations });
-    }
 }
 
 // ==========================================
