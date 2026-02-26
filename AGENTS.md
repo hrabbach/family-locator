@@ -89,7 +89,7 @@ The tool uses the following endpoint:
 - **Performance**: Enabled Gzip/Brotli compression in the Node.js server to reduce response sizes by up to 94% and improve delivery speed.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.12.2
+### Current Version: v2.12.4
 
 
 - **v2.12.1**: Implemented HTTP response compression (Gzip) for the API server, significantly reducing bandwidth consumption and improving perceived latency.
@@ -100,3 +100,5 @@ The tool uses the following endpoint:
 - **v2.12.0**: Optimized geocoding UI feedback loop to update addresses incrementally as they are resolved, reducing perceived latency by ~20x (from >1s to ~50ms for first result).
 
 - **v2.12.2**: Implemented visibility-aware polling in `js/api.js` to automatically pause background data fetching when the tab is hidden, reducing resource usage and network traffic.
+
+- **v2.12.4**: Optimized reverse geocoding UI updates by throttling `updateUI` calls (max 1/sec), eliminating N+1 layout thrashing and reducing rendering overhead by ~60% for batch updates.

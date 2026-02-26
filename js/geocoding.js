@@ -3,7 +3,7 @@
 /**
  * @fileoverview Reverse geocoding with queued requests and address caching.
  * @module js/geocoding
- * @version 2.12.1
+ * @version 2.12.4
  */
 
 // ==========================================
@@ -114,6 +114,7 @@ export function enqueueGeocodeRequest(lat, lon, config) {
 export async function processGeocodeQueue() {
     if (geocodeProcessing) return;
     geocodeProcessing = true;
+    let lastUIUpdate = 0;
 
     while (geocodeQueue.length > 0) {
         const task = geocodeQueue.shift();
@@ -129,9 +130,13 @@ export async function processGeocodeQueue() {
             window.familyTracker.ownerLocation.address = resolveAddress(window.familyTracker.ownerLocation);
         }
 
-        // Update UI to show the new addresses
+        // Update UI to show the new addresses (throttled)
         if (window.familyTracker?.updateUI) {
-            window.familyTracker.updateUI({ locations: window.familyTracker.lastLocations });
+            const now = Date.now();
+            if (geocodeQueue.length === 0 || now - lastUIUpdate > 1000) {
+                window.familyTracker.updateUI({ locations: window.familyTracker.lastLocations });
+                lastUIUpdate = now;
+            }
         }
 
         if (geocodeQueue.length > 0) {
