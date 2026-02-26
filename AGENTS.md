@@ -89,7 +89,7 @@ The tool uses the following endpoint:
 - **Performance**: Enabled Gzip/Brotli compression in the Node.js server to reduce response sizes by up to 94% and improve delivery speed.
 - **Code Organization**: ES6 module architecture with clear separation of concerns for improved maintainability and independent caching.
 
-### Current Version: v2.12.1
+### Current Version: v2.12.2
 
 
 - **v2.12.1**: Implemented HTTP response compression (Gzip) for the API server, significantly reducing bandwidth consumption and improving perceived latency.
@@ -98,3 +98,5 @@ The tool uses the following endpoint:
 - **v2.11.1**: Finalized Toast notification system and replaced all legacy alerts with modern toasts. Enhanced `showToast` to support different notification types (success, error, warning, info).
 - **v2.11.2**: Optimized map overlay rendering by replacing full DOM reconstruction with efficient diffing, significantly reducing layout thrashing and improving performance during updates (4x faster in benchmarks).
 - **v2.12.0**: Optimized geocoding UI feedback loop to update addresses incrementally as they are resolved, reducing perceived latency by ~20x (from >1s to ~50ms for first result).
+
+- **v2.12.2**: Implemented visibility-aware polling in `js/api.js` to automatically pause background data fetching when the tab is hidden, reducing resource usage and network traffic.

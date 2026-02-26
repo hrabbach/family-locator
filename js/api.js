@@ -3,7 +3,7 @@
 /**
  * @fileoverview API communication with retry logic and polling.
  * @module js/api
- * @version 2.12.1
+ * @version 2.12.2
  */
 
 import { getConfig } from './config.js';
@@ -199,23 +199,53 @@ export async function fetchData(updateUICallback, updateMapCallback, selectedMem
 // Polling Management
 // ==========================================
 
+// Visibility change handler storage
+let visibilityHandler = null;
+
 export function startTracking(fetchCallback) {
     stopTracking();
 
     // Immediate fetch
     fetchCallback();
 
-    // Set up polling
-    refreshInterval = setInterval(fetchCallback, 10000);
+    // Internal helper to start intervals
+    const startIntervals = () => {
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(fetchCallback, 10000);
 
-    // Countdown timer
-    countdownInterval = setInterval(() => {
-        secondsToRefresh--;
-        if (secondsToRefresh <= 0) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            secondsToRefresh--;
+            if (secondsToRefresh <= 0) {
+                secondsToRefresh = 10;
+            }
+            // UI update handled by caller
+        }, 1000);
+    };
+
+    startIntervals();
+
+    // Visibility Handler
+    visibilityHandler = () => {
+        if (document.hidden) {
+            // Stop polling to save resources
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        } else {
+            // Resume polling
+            fetchCallback(); // Fetch immediately on resume
             secondsToRefresh = 10;
+            startIntervals();
         }
-        // UI update handled by caller
-    }, 1000);
+    };
+
+    document.addEventListener('visibilitychange', visibilityHandler);
 }
 
 export function stopTracking() {
@@ -226,6 +256,10 @@ export function stopTracking() {
     if (countdownInterval) {
         clearInterval(countdownInterval);
         countdownInterval = null;
+    }
+    if (visibilityHandler) {
+        document.removeEventListener('visibilitychange', visibilityHandler);
+        visibilityHandler = null;
     }
 }
 
