@@ -425,7 +425,8 @@ export function updateMemberCardContent(card, member, config, names, isOwner, in
         timestamp: timestamp,
         name: displayName,
         address: member.address || null,
-        distText: distText
+        distText: distText,
+        isSelected: selectedMemberEmails.has(email)
     };
 
     const currentData = card.dataset.memberData ? JSON.parse(card.dataset.memberData) : {};
