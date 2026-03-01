@@ -1,3 +1,5 @@
+* This repository was archived on March 1st, 2026 - ongoing development is happening in a private repo together with an Android companion app that isn't ready for public release yet. I will update this notice when it becomes available. *
+
 # Family Locator
 
 A lightweight, self-hosted Progressive Web App (PWA) for tracking family members' locations using the Dawarich API. Built with modern ES6 module architecture for improved maintainability and caching.
